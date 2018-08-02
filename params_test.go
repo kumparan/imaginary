@@ -149,6 +149,65 @@ func TestParseExtend(t *testing.T) {
 	}
 }
 
+func TestParseAspectRatio(t *testing.T) {
+	cases := []struct {
+		aspectRatioParam string
+		aspectRatioValue map[string]int
+	}{
+		{aspectRatioParam: "5:7", aspectRatioValue: map[string]int{"width": 5, "height": 7}},
+		{aspectRatioParam: "smart", aspectRatioValue: map[string]int{"width": -1, "height": -1}},
+		{aspectRatioParam: "7", aspectRatioValue: map[string]int{"width": -1, "height": -1}},
+		{aspectRatioParam: " 7:0 ", aspectRatioValue: map[string]int{"width": 7, "height": 0}},
+	}
+
+	for _, test := range cases {
+		c := parseAspectRatio(test.aspectRatioParam)
+		if c["width"] != test.aspectRatioValue["width"] || c["height"] != test.aspectRatioValue["height"] {
+			t.Errorf("Invalid aspect ratio value : %v != %v", c, test.aspectRatioValue)
+		}
+	}
+}
+
+func TestShouldTransformByAspectRatio(t *testing.T) {
+	cases := []struct {
+		param       map[string]interface{}
+		expectation bool
+	}{
+		{param: map[string]interface{}{"width": 640, "height": 480, "aspectratio": map[string]int{"width": 16, "height": 9}}, expectation: false},
+		{param: map[string]interface{}{"width": 0, "height": 0, "aspectratio": map[string]int{"width": 16, "height": 9}}, expectation: false},
+		{param: map[string]interface{}{"width": 640, "height": 0, "aspectratio": map[string]int{"width": 16, "height": 9}}, expectation: true},
+		{param: map[string]interface{}{"height": 480, "width": 0, "aspectratio": map[string]int{"width": 16, "height": 9}}, expectation: true},
+	}
+
+	for _, test := range cases {
+		c := shouldTransformByAspectRatio(test.param)
+		if c != test.expectation {
+			t.Errorf("Invalid aspect ratio value : %v != %v", c, test.expectation)
+		}
+	}
+}
+
+func TestTransformByAspectRatio(t *testing.T) {
+	cases := []struct {
+		param                map[string]interface{}
+		newWidthExpectation  int
+		newHeightExpectation int
+	}{
+		{param: map[string]interface{}{"width": 640, "height": 0, "aspectratio": map[string]int{"width": 2, "height": 1}}, newWidthExpectation: 640, newHeightExpectation: 320},
+		{param: map[string]interface{}{"width": 0, "height": 320, "aspectratio": map[string]int{"width": 2, "height": 1}}, newWidthExpectation: 640, newHeightExpectation: 320},
+	}
+
+	for _, test := range cases {
+		width, height := transformByAspectRatio(test.param)
+		if width != test.newWidthExpectation {
+			t.Errorf("Invalid width value : %v != %v", width, test.newWidthExpectation)
+		}
+		if height != test.newHeightExpectation {
+			t.Errorf("Invalid width value : %v != %v", height, test.newHeightExpectation)
+		}
+	}
+}
+
 func TestGravity(t *testing.T) {
 	cases := []struct {
 		gravityValue   string

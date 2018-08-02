@@ -45,6 +45,7 @@ var allowedParams = map[string]string{
 	"sigma":       "float",
 	"minampl":     "float",
 	"operations":  "json",
+	"aspectratio": "aspectratio",
 }
 
 func readParams(query url.Values) ImageOptions {
@@ -114,13 +115,52 @@ func parseParam(param, kind string) interface{} {
 	if kind == "json" {
 		return parseJSONOperations(param)
 	}
+	if kind == "aspectratio" {
+		return parseAspectRatio(param)
+	}
 	return param
 }
 
+func shouldTransformByAspectRatio(params map[string]interface{}) bool {
+	width := params["width"].(int)
+	height := params["height"].(int)
+
+	// override aspect ratio parameters if width and height is given or not given at all
+	if (width != 0 && height != 0) || (width == 0 && height == 0) {
+		return false
+	}
+
+	return params["aspectratio"] != nil
+}
+
+func transformByAspectRatio(params map[string]interface{}) (width, height int) {
+	width = params["width"].(int)
+	height = params["height"].(int)
+	aspectRatio, ok := params["aspectratio"].(map[string]int)
+	if !ok {
+		return
+	}
+
+	if width != 0 {
+		height = width / aspectRatio["width"] * aspectRatio["height"]
+	} else {
+		width = height / aspectRatio["height"] * aspectRatio["width"]
+	}
+
+	return
+}
+
 func mapImageParams(params map[string]interface{}) ImageOptions {
+	width := params["width"].(int)
+	height := params["height"].(int)
+
+	if shouldTransformByAspectRatio(params) {
+		width, height = transformByAspectRatio(params)
+	}
+
 	return ImageOptions{
-		Width:         params["width"].(int),
-		Height:        params["height"].(int),
+		Width:         width,
+		Height:        height,
 		Top:           params["top"].(int),
 		Left:          params["left"].(int),
 		AreaWidth:     params["areawidth"].(int),
@@ -162,6 +202,23 @@ func parseBool(val string) bool {
 
 func parseInt(param string) int {
 	return int(math.Floor(parseFloat(param) + 0.5))
+}
+
+func parseAspectRatio(val string) map[string]int {
+	val = strings.TrimSpace(strings.ToLower(val))
+	slicedVal := strings.Split(val, ":")
+
+	if len(slicedVal) < 2 {
+		return map[string]int{
+			"width":  -1,
+			"height": -1,
+		}
+	}
+
+	return map[string]int{
+		"width":  parseInt(slicedVal[0]),
+		"height": parseInt(slicedVal[1]),
+	}
 }
 
 func parseFloat(param string) float64 {
