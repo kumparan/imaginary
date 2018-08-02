@@ -209,10 +209,7 @@ func parseAspectRatio(val string) map[string]int {
 	slicedVal := strings.Split(val, ":")
 
 	if len(slicedVal) < 2 {
-		return map[string]int{
-			"width":  -1,
-			"height": -1,
-		}
+		return nil
 	}
 
 	return map[string]int{

@@ -155,8 +155,8 @@ func TestParseAspectRatio(t *testing.T) {
 		aspectRatioValue map[string]int
 	}{
 		{aspectRatioParam: "5:7", aspectRatioValue: map[string]int{"width": 5, "height": 7}},
-		{aspectRatioParam: "smart", aspectRatioValue: map[string]int{"width": -1, "height": -1}},
-		{aspectRatioParam: "7", aspectRatioValue: map[string]int{"width": -1, "height": -1}},
+		{aspectRatioParam: "smart", aspectRatioValue: nil},
+		{aspectRatioParam: "7", aspectRatioValue: nil},
 		{aspectRatioParam: " 7:0 ", aspectRatioValue: map[string]int{"width": 7, "height": 0}},
 	}
 
