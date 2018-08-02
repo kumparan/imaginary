@@ -130,7 +130,13 @@ func shouldTransformByAspectRatio(params map[string]interface{}) bool {
 		return false
 	}
 
-	return params["aspectratio"] != nil
+	aspectRatio, ok := params["aspectratio"].(map[string]int)
+	if !ok {
+		return false
+	}
+
+	return aspectRatio != nil
+
 }
 
 func transformByAspectRatio(params map[string]interface{}) (width, height int) {
