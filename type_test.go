@@ -37,11 +37,11 @@ func TestIsImageTypeSupported(t *testing.T) {
 		{"png", false},
 		{"multipart/form-data; encoding=utf-8", false},
 		{"application/json", false},
-		{"image/gif", bimg.IsImageTypeSupportedByVips(bimg.GIF)},
-		{"image/svg+xml", bimg.IsImageTypeSupportedByVips(bimg.SVG)},
-		{"image/svg", bimg.IsImageTypeSupportedByVips(bimg.SVG)},
-		{"image/tiff", bimg.IsImageTypeSupportedByVips(bimg.TIFF)},
-		{"application/pdf", bimg.IsImageTypeSupportedByVips(bimg.PDF)},
+		{"image/gif", bimg.IsImageTypeSupportedByVips(bimg.GIF).Load},
+		{"image/svg+xml", bimg.IsImageTypeSupportedByVips(bimg.SVG).Load},
+		{"image/svg", bimg.IsImageTypeSupportedByVips(bimg.SVG).Load},
+		{"image/tiff", bimg.IsImageTypeSupportedByVips(bimg.TIFF).Load},
+		{"application/pdf", bimg.IsImageTypeSupportedByVips(bimg.PDF).Load},
 		{"text/plain", false},
 		{"blablabla", false},
 		{"", false},
@@ -75,7 +75,7 @@ func TestImageType(t *testing.T) {
 
 	for _, file := range files {
 		if ImageType(file.name) != file.expected {
-			t.Fatalf("Invalid type: %s != %s", file.name, file.expected)
+			t.Fatalf("Invalid type: %s != %s", file.name, bimg.ImageTypes[file.expected])
 		}
 	}
 }
@@ -97,7 +97,7 @@ func TestGetImageMimeType(t *testing.T) {
 
 	for _, file := range files {
 		if GetImageMimeType(file.name) != file.expected {
-			t.Fatalf("Invalid type: %s != %s", file.name, file.expected)
+			t.Fatalf("Invalid type: %s != %s", bimg.ImageTypes[file.name], file.expected)
 		}
 	}
 }

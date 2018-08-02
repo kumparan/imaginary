@@ -8,6 +8,7 @@ Thumbs.db
 # Folders
 _obj
 _test
+.idea
 
 # Architecture specific extensions/prefixes
 *.[568vq]
@@ -33,6 +34,3 @@ bin/
 
 imaginary
 bin/imaginary
-
-## ignore vendor packages
-vendor/

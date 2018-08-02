@@ -17,19 +17,24 @@ const (
 	Unauthorized
 	InternalError
 	NotFound
+	NotImplemented
+	Forbidden
 )
 
 var (
-	ErrNotFound           = NewError("Not found", NotFound)
-	ErrInvalidApiKey      = NewError("Invalid or missing API key", Unauthorized)
-	ErrMethodNotAllowed   = NewError("Method not allowed", NotAllowed)
-	ErrUnsupportedMedia   = NewError("Unsupported media type", Unsupported)
-	ErrOutputFormat       = NewError("Unsupported output image format", BadRequest)
-	ErrEmptyBody          = NewError("Empty image", BadRequest)
-	ErrMissingParamFile   = NewError("Missing required param: file", BadRequest)
-	ErrInvalidFilePath    = NewError("Invalid file path", BadRequest)
-	ErrInvalidImageURL    = NewError("Invalid image URL", BadRequest)
-	ErrMissingImageSource = NewError("Cannot process the image due to missing or invalid params", BadRequest)
+	ErrNotFound             = NewError("Not found", NotFound)
+	ErrInvalidApiKey        = NewError("Invalid or missing API key", Unauthorized)
+	ErrMethodNotAllowed     = NewError("Method not allowed", NotAllowed)
+	ErrUnsupportedMedia     = NewError("Unsupported media type", Unsupported)
+	ErrOutputFormat         = NewError("Unsupported output image format", BadRequest)
+	ErrEmptyBody            = NewError("Empty image", BadRequest)
+	ErrMissingParamFile     = NewError("Missing required param: file", BadRequest)
+	ErrInvalidFilePath      = NewError("Invalid file path", BadRequest)
+	ErrInvalidImageURL      = NewError("Invalid image URL", BadRequest)
+	ErrMissingImageSource   = NewError("Cannot process the image due to missing or invalid params", BadRequest)
+	ErrNotImplemented       = NewError("Not implemented endpoint", NotImplemented)
+	ErrInvalidURLSignature  = NewError("Invalid URL signature", BadRequest)
+	ErrURLSignatureMismatch = NewError("URL signature mismatch", Forbidden)
 )
 
 type Error struct {
@@ -64,6 +69,12 @@ func (e Error) HTTPCode() int {
 	}
 	if e.Code == NotFound {
 		return http.StatusNotFound
+	}
+	if e.Code == NotImplemented {
+		return http.StatusNotImplemented
+	}
+	if e.Code == Forbidden {
+		return http.StatusForbidden
 	}
 	return http.StatusServiceUnavailable
 }

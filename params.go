@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"math"
 	"net/url"
 	"strconv"
@@ -32,6 +33,7 @@ var allowedParams = map[string]string{
 	"noreplicate": "bool",
 	"force":       "bool",
 	"embed":       "bool",
+	"stripmeta":   "bool",
 	"text":        "string",
 	"font":        "string",
 	"type":        "string",
@@ -40,6 +42,10 @@ var allowedParams = map[string]string{
 	"gravity":     "gravity",
 	"background":  "color",
 	"extend":      "extend",
+	"sigma":       "float",
+	"minampl":     "float",
+	"operations":  "json",
+	"aspectratio": "aspectratio",
 }
 
 func readParams(query url.Values) ImageOptions {
@@ -48,6 +54,37 @@ func readParams(query url.Values) ImageOptions {
 	for key, kind := range allowedParams {
 		param := query.Get(key)
 		params[key] = parseParam(param, kind)
+	}
+
+	return mapImageParams(params)
+}
+
+func readMapParams(options map[string]interface{}) ImageOptions {
+	params := make(map[string]interface{})
+
+	for key, kind := range allowedParams {
+		value, ok := options[key]
+		if !ok {
+			// Force type defaults
+			params[key] = parseParam("", kind)
+			continue
+		}
+
+		// Parse non JSON primitive types that would be represented as string types
+		if kind == "color" || kind == "colorspace" || kind == "gravity" || kind == "extend" {
+			if v, ok := value.(string); ok {
+				params[key] = parseParam(v, kind)
+			}
+		} else if kind == "int" {
+			if v, ok := value.(float64); ok {
+				params[key] = int(v)
+			}
+			if v, ok := value.(int); ok {
+				params[key] = v
+			}
+		} else {
+			params[key] = value
+		}
 	}
 
 	return mapImageParams(params)
@@ -75,40 +112,86 @@ func parseParam(param, kind string) interface{} {
 	if kind == "extend" {
 		return parseExtendMode(param)
 	}
+	if kind == "json" {
+		return parseJSONOperations(param)
+	}
+	if kind == "aspectratio" {
+		return parseAspectRatio(param)
+	}
 	return param
 }
 
+func shouldTransformByAspectRatio(params map[string]interface{}) bool {
+	width := params["width"].(int)
+	height := params["height"].(int)
+
+	// override aspect ratio parameters if width and height is given or not given at all
+	if (width != 0 && height != 0) || (width == 0 && height == 0) {
+		return false
+	}
+
+	return params["aspectratio"] != nil
+}
+
+func transformByAspectRatio(params map[string]interface{}) (width, height int) {
+	width = params["width"].(int)
+	height = params["height"].(int)
+	aspectRatio, ok := params["aspectratio"].(map[string]int)
+	if !ok {
+		return
+	}
+
+	if width != 0 {
+		height = width / aspectRatio["width"] * aspectRatio["height"]
+	} else {
+		width = height / aspectRatio["height"] * aspectRatio["width"]
+	}
+
+	return
+}
+
 func mapImageParams(params map[string]interface{}) ImageOptions {
+	width := params["width"].(int)
+	height := params["height"].(int)
+
+	if shouldTransformByAspectRatio(params) {
+		width, height = transformByAspectRatio(params)
+	}
+
 	return ImageOptions{
-		Width:       params["width"].(int),
-		Height:      params["height"].(int),
-		Top:         params["top"].(int),
-		Left:        params["left"].(int),
-		AreaWidth:   params["areawidth"].(int),
-		AreaHeight:  params["areaheight"].(int),
-		DPI:         params["dpi"].(int),
-		Quality:     params["quality"].(int),
-		TextWidth:   params["textwidth"].(int),
-		Compression: params["compression"].(int),
-		Rotate:      params["rotate"].(int),
-		Factor:      params["factor"].(int),
-		Color:       params["color"].([]uint8),
-		Text:        params["text"].(string),
-		Font:        params["font"].(string),
-		Type:        params["type"].(string),
-		Flip:        params["flip"].(bool),
-		Flop:        params["flop"].(bool),
-		Embed:       params["flop"].(bool),
-		NoCrop:      params["nocrop"].(bool),
-		Force:       params["force"].(bool),
-		NoReplicate: params["noreplicate"].(bool),
-		NoRotation:  params["norotation"].(bool),
-		NoProfile:   params["noprofile"].(bool),
-		Opacity:     float32(params["opacity"].(float64)),
-		Extend:      params["extend"].(bimg.Extend),
-		Gravity:     params["gravity"].(bimg.Gravity),
-		Colorspace:  params["colorspace"].(bimg.Interpretation),
-		Background:  params["background"].([]uint8),
+		Width:         width,
+		Height:        height,
+		Top:           params["top"].(int),
+		Left:          params["left"].(int),
+		AreaWidth:     params["areawidth"].(int),
+		AreaHeight:    params["areaheight"].(int),
+		DPI:           params["dpi"].(int),
+		Quality:       params["quality"].(int),
+		TextWidth:     params["textwidth"].(int),
+		Compression:   params["compression"].(int),
+		Rotate:        params["rotate"].(int),
+		Factor:        params["factor"].(int),
+		Color:         params["color"].([]uint8),
+		Text:          params["text"].(string),
+		Font:          params["font"].(string),
+		Type:          params["type"].(string),
+		Flip:          params["flip"].(bool),
+		Flop:          params["flop"].(bool),
+		Embed:         params["embed"].(bool),
+		NoCrop:        params["nocrop"].(bool),
+		Force:         params["force"].(bool),
+		NoReplicate:   params["noreplicate"].(bool),
+		NoRotation:    params["norotation"].(bool),
+		NoProfile:     params["noprofile"].(bool),
+		StripMetadata: params["stripmeta"].(bool),
+		Opacity:       float32(params["opacity"].(float64)),
+		Extend:        params["extend"].(bimg.Extend),
+		Gravity:       params["gravity"].(bimg.Gravity),
+		Colorspace:    params["colorspace"].(bimg.Interpretation),
+		Background:    params["background"].([]uint8),
+		Sigma:         params["sigma"].(float64),
+		MinAmpl:       params["minampl"].(float64),
+		Operations:    params["operations"].(PipelineOperations),
 	}
 }
 
@@ -119,6 +202,20 @@ func parseBool(val string) bool {
 
 func parseInt(param string) int {
 	return int(math.Floor(parseFloat(param) + 0.5))
+}
+
+func parseAspectRatio(val string) map[string]int {
+	val = strings.TrimSpace(strings.ToLower(val))
+	slicedVal := strings.Split(val, ":")
+
+	if len(slicedVal) < 2 {
+		return nil
+	}
+
+	return map[string]int{
+		"width":  parseInt(slicedVal[0]),
+		"height": parseInt(slicedVal[1]),
+	}
 }
 
 func parseFloat(param string) float64 {
@@ -145,6 +242,12 @@ func parseColor(val string) []uint8 {
 	return buf
 }
 
+func parseJSONOperations(data string) PipelineOperations {
+	operations := PipelineOperations{}
+	json.Unmarshal([]byte(data), &operations)
+	return operations
+}
+
 func parseExtendMode(val string) bimg.Extend {
 	val = strings.TrimSpace(strings.ToLower(val))
 	if val == "white" {
@@ -163,18 +266,18 @@ func parseExtendMode(val string) bimg.Extend {
 }
 
 func parseGravity(val string) bimg.Gravity {
+	var m = map[string]bimg.Gravity{
+		"south": bimg.GravitySouth,
+		"north": bimg.GravityNorth,
+		"east":  bimg.GravityEast,
+		"west":  bimg.GravityWest,
+		"smart": bimg.GravitySmart,
+	}
+
 	val = strings.TrimSpace(strings.ToLower(val))
-	if val == "south" {
-		return bimg.GravitySouth
+	if g, ok := m[val]; ok {
+		return g
 	}
-	if val == "north" {
-		return bimg.GravityNorth
-	}
-	if val == "east" {
-		return bimg.GravityEast
-	}
-	if val == "west" {
-		return bimg.GravityWest
-	}
+
 	return bimg.GravityCentre
 }

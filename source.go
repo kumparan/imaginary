@@ -14,6 +14,7 @@ type SourceConfig struct {
 	MountPath       string
 	Type            ImageSourceType
 	AllowedOrigings []*url.URL
+	MaxAllowedSize  int
 }
 
 var imageSourceMap = make(map[ImageSourceType]ImageSource)
@@ -35,7 +36,8 @@ func LoadSources(o ServerOptions) {
 			MountPath:       o.Mount,
 			AuthForwarding:  o.AuthForwarding,
 			Authorization:   o.Authorization,
-			AllowedOrigings: o.AlloweOrigins,
+			AllowedOrigings: o.AllowedOrigins,
+			MaxAllowedSize:  o.MaxAllowedSize,
 		})
 	}
 }

@@ -1,14 +1,14 @@
-# imaginary [![Build Status](https://travis-ci.org/h2non/imaginary.png)](https://travis-ci.org/h2non/imaginary) [![Docker](https://img.shields.io/badge/docker-h2non/imaginary-blue.svg)](https://registry.hub.docker.com/u/h2non/imaginary/) [![Docker Registry](https://img.shields.io/docker/pulls/h2non/imaginary.svg)](https://registry.hub.docker.com/u/h2non/imaginary) [![Heroku](https://img.shields.io/badge/Heroku-Deploy_Now-blue.svg)](https://heroku.com/deploy) [![Go Report Card](http://goreportcard.com/badge/h2non/imaginary)](http://goreportcard.com/report/h2non/imaginary)
+# imaginary [![Build Status](https://travis-ci.org/h2non/imaginary.png)](https://travis-ci.org/h2non/imaginary) [![Docker](https://img.shields.io/badge/docker-h2non/imaginary-blue.svg)](https://hub.docker.com/r/h2non/imaginary/) [![Docker Registry](https://img.shields.io/docker/pulls/h2non/imaginary.svg)](https://hub.docker.com/r/h2non/imaginary/) [![Go Report Card](http://goreportcard.com/badge/h2non/imaginary)](http://goreportcard.com/report/h2non/imaginary) ![ImageLayers](https://badge.imagelayers.io/h2non/imaginary.svg)
 
 <img src="http://s14.postimg.org/8th71a201/imaginary_world.jpg" width="100%" />
 
-**[Fast](#benchmarks) HTTP [microservice](http://microservices.io/patterns/microservices.html)** written in Go **for high-level image processing** backed by [bimg](https://github.com/h2non/bimg) and [libvips](https://github.com/jcupitt/libvips). `imaginary` can be used as private or public HTTP service for massive image processing.
-It's almost dependency-free and only uses [`net/http`](http://golang.org/pkg/net/http/) native package for better [performance](#performance).
+**[Fast](#benchmarks) HTTP [microservice](http://microservices.io/patterns/microservices.html)** written in Go **for high-level image processing** backed by [bimg](https://github.com/h2non/bimg) and [libvips](https://github.com/jcupitt/libvips). `imaginary` can be used as private or public HTTP service for massive image processing with first-class support for [Docker](#docker) & [Heroku](#heroku).
+It's almost dependency-free and only uses [`net/http`](http://golang.org/pkg/net/http/) native package without additional abstractions for better [performance](#performance).
 
 Supports multiple [image operations](#supported-image-operations) exposed as a simple [HTTP API](#http-api),
-with additional optional features such as **API token authorization**, **gzip compression**, **HTTP traffic throttle** strategy and **CORS support** for web clients.
+with additional optional features such as **API token authorization**, **URL signature protection**, **HTTP traffic throttle** strategy and **CORS support** for web clients.
 
-`imaginary` **can read** images **from HTTP payloads**, **server local path** or **remote HTTP servers**, supporting **JPEG**, **PNG**, **WEBP**, and optionally **TIFF**, **PDF**, **GIF** and **SVG** formats if `libvips@8.3+` is compiled with proper library bindings.
+`imaginary` **can read** images **from HTTP POST payloads**, **server local path** or **remote HTTP servers**, supporting **JPEG**, **PNG**, **WEBP**, and optionally **TIFF**, **PDF**, **GIF** and **SVG** formats if `libvips@8.3+` is compiled with proper library bindings.
 
 `imaginary` is able to output images as JPEG, PNG and WEBP formats, including transparent conversion across them.
 
@@ -19,9 +19,7 @@ which requires a [low memory footprint](http://www.vips.ecs.soton.ac.uk/index.ph
 and it's typically 4x faster than using the quickest ImageMagick and GraphicsMagick
 settings or Go native `image` package, and in some cases it's even 8x faster processing JPEG images.
 
-To get started, take a look the [installation](#installation) steps, [usage](#usage) cases and [API](#http-api) docs.
-
-`imaginary` is currently used in production processing thousands of images per day.
+To get started, take a look the [installation](#installation) steps, [usage](#command-line-usage) cases and [API](#http-api) docs.
 
 ## Contents
 
@@ -30,30 +28,37 @@ To get started, take a look the [installation](#installation) steps, [usage](#us
 - [Installation](#installation)
   - [Docker](#docker)
   - [Heroku](#heroku)
+  - [Cloud Foundry](#cloudfoundry)
 - [Recommended resources](#recommended-resources)
 - [Production notes](#production-notes)
 - [Scalability](#scalability)
 - [Clients](#clients)
 - [Performance](#performance)
 - [Benchmark](#benchmark)
-- [Usage](#usage)
+- [Command-line usage](#command-line-usage)
 - [HTTP API](#http-api)
   - [Authorization](#authorization)
+  - [URL signature](#url-signature)
   - [Errors](#errors)
   - [Form data](#form-data)
   - [Params](#params)
   - [Endpoints](#get-)
+- [Authors](#authors)
+- [License](#license)
 
 ## Supported image operations
 
 - Resize
 - Enlarge
 - Crop
+- SmartCrop (based on [libvips built-in algorithm](https://github.com/jcupitt/libvips/blob/master/libvips/conversion/smartcrop.c))
 - Rotate (with auto-rotate based on EXIF orientation)
 - Flip (with auto-flip based on EXIF metadata)
 - Flop
 - Zoom
 - Thumbnail
+- Fit
+- [Pipeline](#get--post-pipeline) of multiple independent image transformations in a single HTTP request.
 - Configurable image area extraction
 - Embed/Extend image, supporting multiple modes (white, black, mirror, copy or custom background color)
 - Watermark (customizable by text)
@@ -61,12 +66,13 @@ To get started, take a look the [installation](#installation) steps, [usage](#us
 - Format conversion (with additional quality/compression settings)
 - Info (image size, format, orientation, alpha...)
 - Reply with default or custom placeholder image in case of error.
+- Blur
 
 ## Prerequisites
 
-- [libvips](https://github.com/jcupitt/libvips) v7.40.0+ or 8+ (8.3+ recommended)
+- [libvips](https://github.com/jcupitt/libvips) 8.3+ (8.5+ recommended)
 - C compatible compiler such as gcc 4.6+ or clang 3.0+
-- Go 1.3+
+- Go 1.6+
 
 ## Installation
 
@@ -83,16 +89,16 @@ go get -u gopkg.in/h2non/bimg.v1
 
 Run the following script as `sudo` (supports OSX, Debian/Ubuntu, Redhat, Fedora, Amazon Linux):
 ```bash
-curl -s https://raw.githubusercontent.com/lovell/sharp/master/preinstall.sh | sudo bash -
+curl -s https://raw.githubusercontent.com/h2non/bimg/master/preinstall.sh | sudo bash -
 ```
 
-The [install script](https://github.com/lovell/sharp/blob/master/preinstall.sh) requires `curl` and `pkg-config`
+The [install script](https://github.com/h2non/bimg/blob/master/preinstall.sh) requires `curl` and `pkg-config`
 
 ### Docker
 
 See [Dockerfile](https://github.com/h2non/imaginary/blob/master/Dockerfile) for image details.
 
-Fetch the image (comes with latest stable Go and libvips versions)
+Fetch the image (comes with latest stable Go and `libvips` versions)
 ```
 docker pull h2non/imaginary
 ```
@@ -118,6 +124,23 @@ docker stop h2non/imaginary
 ```
 
 You can see all the Docker tags [here](https://hub.docker.com/r/h2non/imaginary/tags/).
+
+Alternatively you may add imaginary to your `docker-compose.yml` file:
+
+```yaml
+version: "3"
+services:
+  imaginary:
+    image: h2non/imaginary:latest
+    # optionally mount a volume as local image source
+    volumes:
+      - images:/mnt/data
+    environment:
+       PORT: 9000
+    command: -enable-url-source -mount /mnt/data
+    ports:
+      - "9000:9000"
+```
 
 ### Heroku
 
@@ -150,6 +173,30 @@ heroku git:remote -a your-application
 Deploy it!
 ```
 git push heroku master
+```
+
+### CloudFoundry
+
+Assuming you have cloudfoundry account, [bluemix](https://console.ng.bluemix.net/) or [pivotal](https://console.run.pivotal.io/) and [command line utility installed](https://github.com/cloudfoundry/cli).
+
+Clone this repository:
+```
+git clone https://github.com/h2non/imaginary.git
+```
+
+Push the application
+```
+cf push -b https://github.com/yacloud-io/go-buildpack-imaginary.git imaginary-inst01 --no-start
+```
+
+Define the library path
+```
+cf set-env imaginary-inst01 LD_LIBRARY_PATH /home/vcap/app/vendor/vips/lib
+```
+
+Start the application
+```
+cf start imaginary-inst01
 ```
 
 ### Recommended resources
@@ -207,7 +254,6 @@ libvips is probably the faster open source solution for image processing.
 Here you can see some performance test comparisons for multiple scenarios:
 
 - [libvips speed and memory usage](http://www.vips.ecs.soton.ac.uk/index.php?title=Speed_and_Memory_Use)
-- [sharp performance tests](https://github.com/lovell/sharp#the-task)
 - [bimg](https://github.com/h2non/bimg#Performance) (Go library with C bindings to libvips)
 
 ## Benchmark
@@ -238,40 +284,46 @@ The most expensive image operation under high concurrency scenarios (> 20 req/se
 ```
 Usage:
   imaginary -p 80
-  imaginary -cors -gzip
+  imaginary -cors
   imaginary -concurrency 10
   imaginary -path-prefix /api/v1
   imaginary -enable-url-source
+  imaginary -disable-endpoints form,health,crop,rotate
   imaginary -enable-url-source -allowed-origins http://localhost,http://server.com
   imaginary -enable-url-source -enable-auth-forwarding
   imaginary -enable-url-source -authorization "Basic AwDJdL2DbwrD=="
-	imaginary -enable-placeholder
-	imaginery -enable-url-source -placeholder ./placeholder.jpg
-	imaginary -h | -help
+  imaginary -enable-placeholder
+  imaginary -enable-url-source -placeholder ./placeholder.jpg
+  imaginary -enable-url-signature -url-signature-key 4f46feebafc4b5e988f131c4ff8b5997
+  imaginary -h | -help
   imaginary -v | -version
 
 Options:
-  -a <addr>                 bind address [default: *]
-  -p <port>                 bind port [default: 8088]
-  -h, -help                 output help
-  -v, -version              output version
+  -a <addr>                 Bind address [default: *]
+  -p <port>                 Bind port [default: 8088]
+  -h, -help                 Show help
+  -v, -version              Show version
   -path-prefix <value>      Url path prefix to listen to [default: "/"]
   -cors                     Enable CORS support [default: false]
-  -gzip                     Enable gzip compression [default: false]
+  -gzip                     Enable gzip compression (deprecated) [default: false]
+  -disable-endpoints        Comma separated endpoints to disable. E.g: form,crop,rotate,health [default: ""]
   -key <key>                Define API key for authorization
   -mount <path>             Mount server local directory
   -http-cache-ttl <num>     The TTL in seconds. Adds caching headers to locally served files.
   -http-read-timeout <num>  HTTP read timeout in seconds [default: 30]
   -http-write-timeout <num> HTTP write timeout in seconds [default: 30]
   -enable-url-source        Restrict remote image source processing to certain origins (separated by commas)
-	-enable-placeholder       Enable image response placeholder to be used in case of error [default: false]
+  -enable-placeholder       Enable image response placeholder to be used in case of error [default: false]
   -enable-auth-forwarding   Forwards X-Forward-Authorization or Authorization header to the image source server. -enable-url-source flag must be defined. Tip: secure your server from public access to prevent attack vectors
-  -allowed-origins <urls>   TLS certificate file path
+  -enable-url-signature     Enable URL signature (URL-safe Base64-encoded HMAC digest) [default: false]
+  -url-signature-key        The URL signature key (32 characters minimum)
+  -allowed-origins <urls>   Restrict remote image source processing to certain origins (separated by commas)
+  -max-allowed-size <bytes> Restrict maximum size of http image source (in bytes)
   -certfile <path>          TLS certificate file path
   -keyfile <path>           TLS private key file path
   -authorization <value>    Defines a constant Authorization header value passed to all the image source servers. -enable-url-source flag must be defined. This overwrites authorization headers forwarding behavior via X-Forward-Authorization
   -placeholder <path>       Image path to image custom placeholder to be used in case of error. Recommended minimum image size is: 1200x1200
-	-concurreny <num>         Throttle concurrency limit per second [default: disabled]
+  -concurrency <num>        Throttle concurrency limit per second [default: disabled]
   -burst <num>              Throttle burst max cache size [default: 100]
   -mrelease <num>           OS memory release interval in seconds [default: 30]
   -cpus <num>               Number of used cpu cores.
@@ -315,11 +367,9 @@ Or alternatively you can manually define an constant Authorization header value 
 imaginary -p 8080 -enable-url-source -authorization "Bearer s3cr3t"
 ```
 
-Send caching headers (only possible with the -mount option). The headers can be set in either "cache nothing" or
-"cache for N seconds". By specifying `0` imaginary will send the "don't cache" headers, otherwise it sends headers with a
-TTL. The following example informs the client to cache the result for 1 year:
+Send fixed caching headers in the response. The headers can be set in either "cache nothing" or "cache for N seconds". By specifying `0` imaginary will send the "don't cache" headers, otherwise it sends headers with a TTL. The following example informs the client to cache the result for 1 year:
 ```
-imaginary -mount ~/images -http-cache-ttl 31556926
+imaginary -p 8080 -enable-url-source -http-cache-ttl 31556926
 ```
 
 Enable placeholder image HTTP responses in case of server error/bad request.
@@ -337,6 +387,18 @@ Since the placeholder image should fit a variety of different sizes, it's recomm
 Supported custom placeholder image types are: `JPEG`, `PNG` and `WEBP`.
 ```
 imaginary -p 8080 -placeholder=placeholder.jpg -enable-url-source
+```
+
+Enable URL signature (URL-safe Base64-encoded HMAC digest).
+
+This feature is particularly useful to protect against multiple image operations attacks and to verify the requester identity.
+```
+imaginary -p 8080 -enable-url-signature -url-signature-key 4f46feebafc4b5e988f131c4ff8b5997
+```
+
+It is recommanded to pass key as environment variables:
+```
+URL_SIGNATURE_KEY=4f46feebafc4b5e988f131c4ff8b5997 imaginary -p 8080 -enable-url-signature
 ```
 
 Increase libvips threads concurrency (experimental):
@@ -363,8 +425,14 @@ curl -O "http://localhost:8088/crop?width=500&height=400&file=foo/bar/image.jpg"
 
 Fetching the image from a remote server (you must pass the `-enable-url-source` flag):
 ```
-curl -O "http://localhost:8088/crop?width=500&height=400&url=https://raw.githubusercontent.com/h2non/imaginary/master/fixtures/large.jpg"
+curl -O "http://localhost:8088/crop?width=500&height=400&url=https://raw.githubusercontent.com/h2non/imaginary/master/testdata/large.jpg"
 ```
+
+Crop behaviour can be influenced with the `gravity` parameter. You can specify a preference for a certain region (north, south, etc.). To enable Smart Crop you can specify the value "smart" to autodetect the most interesting section to consider as center point for the crop operation:
+```
+curl -O "http://localhost:8088/crop?width=500&height=200&gravity=smart&url=https://raw.githubusercontent.com/h2non/imaginary/master/testdata/smart-crop.jpg"
+```
+
 
 #### Playground
 
@@ -384,6 +452,26 @@ Example request with API key:
 POST /crop HTTP/1.1
 Host: localhost:8088
 API-Key: secret
+```
+
+### URL signature
+
+The URL signature is provided by the `sign` request parameter.
+
+The HMAC-SHA256 hash is created by taking the URL path (including the leading /), the request parameters (alphabetically-sorted and concatenated with & into a string). The hash is then base64url-encoded.
+
+Here an example in Go:
+```
+signKey  := "4f46feebafc4b5e988f131c4ff8b5997"
+urlPath  := "/resize"
+urlQuery := "file=image.jpg&height=200&type=jpeg&width=300"
+
+h := hmac.New(sha256.New, []byte(signKey))
+h.Write([]byte(urlPath))
+h.Write([]byte(urlQuery))
+buf := h.Sum(nil)
+
+fmt.Println("sign=" + base64.RawURLEncoding.EncodeToString(buf))
 ```
 
 ### Errors
@@ -445,17 +533,22 @@ Image measures are always in pixels, unless otherwise indicated.
 - **noreplicate** `bool`  - Disable text replication in watermark. Defaults to `false`
 - **norotation**  `bool`  - Disable auto rotation based on EXIF orientation. Defaults to `false`
 - **noprofile**   `bool`  - Disable adding ICC profile metadata. Defaults to `false`
+- **stripmeta**   `bool`  - Remove original image metadata, such as EXIF metadata. Defaults to `false`
 - **text**        `string` - Watermark text content. Example: `copyright (c) 2189`
 - **font**        `string` - Watermark text font type and format. Example: `sans bold 12`
 - **color**       `string` - Watermark text RGB decimal base color. Example: `255,200,150`
-- **type**        `string` - Specify the image format to output. Possible values are: `jpeg`, `png` and `webp`
-- **gravity**     `string` - Define the crop operation gravity. Supported values are: `north`, `south`, `centre`, `west` and `east`. Defaults to `centre`.
+- **type**        `string` - Specify the image format to output. Possible values are: `jpeg`, `png`, `webp` and `auto`. `auto` will use the preferred format requested by the client in the HTTP Accept header. A client can provide multiple comma-separated choices in `Accept` with the best being the one picked.
+- **gravity**     `string` - Define the crop operation gravity. Supported values are: `north`, `south`, `centre`, `west`, `east` and `smart`. Defaults to `centre`.
 - **file**        `string` - Use image from server local file path. In order to use this you must pass the `-mount=<dir>` flag.
-- **url**         `string` - Fetch the image from a remove HTTP server. In order to use this you must pass the `-enable-url-source` flag.
+- **url**         `string` - Fetch the image from a remote HTTP server. In order to use this you must pass the `-enable-url-source` flag.
 - **colorspace**  `string` - Use a custom color space for the output image. Allowed values are: `srgb` or `bw` (black&white)
 - **field**       `string` - Custom image form field name if using `multipart/form`. Defaults to: `file`
 - **extend**      `string` - Extend represents the image extend mode used when the edges of an image are extended. Allowed values are: `black`, `copy`, `mirror`, `white` and `background`. If `background` value is specified, you can define the desired extend RGB color via `background` param, such as `?extend=background&background=250,20,10`. For more info, see [libvips docs](http://www.vips.ecs.soton.ac.uk/supported/8.4/doc/html/libvips/libvips-conversion.html#VIPS-EXTEND-BACKGROUND:CAPS).
 - **background**  `string` - Background RGB decimal base color to use when flattening transparent PNGs. Example: `255,200,150`
+- **sigma**       `float`  - Size of the gaussian mask to use when blurring an image. Example: `15.0`
+- **minampl**     `float`  - Minimum amplitude of the gaussian filter to use when blurring an image. Default: Example: `0.5`
+- **operations**  `json`   - Pipeline of image operation transformations defined as URL safe encoded JSON array. See [pipeline](#get--post-pipeline) endpoints for more details.
+- **sign**        `string` - URL signature (URL-safe Base64-encoded HMAC digest)
 
 #### GET /
 Content-Type: `application/json`
@@ -479,7 +572,7 @@ Provides some useful statistics about the server stats with the following struct
 - **uptime** `number` - Server process uptime in seconds.
 - **allocatedMemory** `number` - Currently allocated memory in megabytes.
 - **totalAllocatedMemory** `number` - Total allocated memory over the time in megabytes.
-- **gorouting** `number` - Number of running gorouting.
+- **goroutines** `number` - Number of running goroutines.
 - **cpus** `number` - Number of used CPU cores.
 
 Example response:
@@ -536,9 +629,43 @@ Crop the image by a given width or height. Image ratio is maintained
 - noprofile `bool`
 - flip `bool`
 - flop `bool`
+- stripmeta `bool`
 - extend `string`
 - background `string` - Example: `?background=250,20,10`
 - colorspace `string`
+- sigma `float`
+- minampl `float`
+- gravity `string`
+- field `string` - Only POST and `multipart/form` payloads
+
+
+#### GET | POST /smartcrop
+Accepts: `image/*, multipart/form-data`. Content-Type: `image/*`
+
+Crop the image by a given width or height using the [libvips](https://github.com/jcupitt/libvips/blob/master/libvips/conversion/smartcrop.c) built-in smart crop algorithm.
+
+##### Allowed params
+
+- width `int`
+- height `int`
+- quality `int` (JPEG-only)
+- compression `int` (PNG-only)
+- type `string`
+- file `string` - Only GET method and if the `-mount` flag is present
+- url `string` - Only GET method and if the `-enable-url-source` flag is present
+- force `bool`
+- rotate `int`
+- embed `bool`
+- norotation `bool`
+- noprofile `bool`
+- flip `bool`
+- flop `bool`
+- stripmeta `bool`
+- extend `string`
+- background `string` - Example: `?background=250,20,10`
+- colorspace `string`
+- sigma `float`
+- minampl `float`
 - gravity `string`
 - field `string` - Only POST and `multipart/form` payloads
 
@@ -561,11 +688,14 @@ Resize an image by width or height. Image aspect ratio is maintained
 - rotate `int`
 - norotation `bool`
 - noprofile `bool`
+- stripmeta `bool`
 - flip `bool`
 - flop `bool`
 - extend `string`
 - background `string` - Example: `?background=250,20,10`
 - colorspace `string`
+- sigma `float`
+- minampl `float`
 - field `string` - Only POST and `multipart/form` payloads
 
 #### GET | POST /enlarge
@@ -585,11 +715,14 @@ Accepts: `image/*, multipart/form-data`. Content-Type: `image/*`
 - rotate `int`
 - norotation `bool`
 - noprofile `bool`
+- stripmeta `bool`
 - flip `bool`
 - flop `bool`
 - extend `string`
 - background `string` - Example: `?background=250,20,10`
 - colorspace `string`
+- sigma `float`
+- minampl `float`
 - field `string` - Only POST and `multipart/form` payloads
 
 #### GET | POST /extract
@@ -613,11 +746,14 @@ Accepts: `image/*, multipart/form-data`. Content-Type: `image/*`
 - rotate `int`
 - norotation `bool`
 - noprofile `bool`
+- stripmeta `bool`
 - flip `bool`
 - flop `bool`
 - extend `string`
 - background `string` - Example: `?background=250,20,10`
 - colorspace `string`
+- sigma `float`
+- minampl `float`
 - field `string` - Only POST and `multipart/form` payloads
 
 #### GET | POST /zoom
@@ -638,11 +774,14 @@ Accepts: `image/*, multipart/form-data`. Content-Type: `image/*`
 - rotate `int`
 - norotation `bool`
 - noprofile `bool`
+- stripmeta `bool`
 - flip `bool`
 - flop `bool`
 - extend `string`
 - background `string` - Example: `?background=250,20,10`
 - colorspace `string`
+- sigma `float`
+- minampl `float`
 - field `string` - Only POST and `multipart/form` payloads
 
 #### GET | POST /thumbnail
@@ -662,11 +801,44 @@ Accepts: `image/*, multipart/form-data`. Content-Type: `image/*`
 - rotate `int`
 - norotation `bool`
 - noprofile `bool`
+- stripmeta `bool`
 - flip `bool`
 - flop `bool`
 - extend `string`
 - background `string` - Example: `?background=250,20,10`
 - colorspace `string`
+- sigma `float`
+- minampl `float`
+- field `string` - Only POST and `multipart/form` payloads
+
+#### GET | POST /fit
+Accepts: `image/*, multipart/form-data`. Content-Type: `image/*`
+
+Resize an image to fit within width and height, without cropping. Image aspect ratio is maintained
+The width and height specify a maximum bounding box for the image.
+
+##### Allowed params
+
+- width `int` `required`
+- height `int` `required`
+- quality `int` (JPEG-only)
+- compression `int` (PNG-only)
+- type `string`
+- file `string` - Only GET method and if the `-mount` flag is present
+- url `string` - Only GET method and if the `-enable-url-source` flag is present
+- embed `bool`
+- force `bool`
+- rotate `int`
+- norotation `bool`
+- noprofile `bool`
+- stripmeta `bool`
+- flip `bool`
+- flop `bool`
+- extend `string`
+- background `string` - Example: `?background=250,20,10`
+- colorspace `string`
+- sigma `float`
+- minampl `float`
 - field `string` - Only POST and `multipart/form` payloads
 
 #### GET | POST /rotate
@@ -686,11 +858,14 @@ Accepts: `image/*, multipart/form-data`. Content-Type: `image/*`
 - force `bool`
 - norotation `bool`
 - noprofile `bool`
+- stripmeta `bool`
 - flip `bool`
 - flop `bool`
 - extend `string`
 - background `string` - Example: `?background=250,20,10`
 - colorspace `string`
+- sigma `float`
+- minampl `float`
 - field `string` - Only POST and `multipart/form` payloads
 
 #### GET | POST /flip
@@ -709,11 +884,14 @@ Accepts: `image/*, multipart/form-data`. Content-Type: `image/*`
 - force `bool`
 - norotation `bool`
 - noprofile `bool`
+- stripmeta `bool`
 - flip `bool`
 - flop `bool`
 - extend `string`
 - background `string` - Example: `?background=250,20,10`
 - colorspace `string`
+- sigma `float`
+- minampl `float`
 - field `string` - Only POST and `multipart/form` payloads
 
 #### GET | POST /flop
@@ -732,11 +910,14 @@ Accepts: `image/*, multipart/form-data`. Content-Type: `image/*`
 - force `bool`
 - norotation `bool`
 - noprofile `bool`
+- stripmeta `bool`
 - flip `bool`
 - flop `bool`
 - extend `string`
 - background `string` - Example: `?background=250,20,10`
 - colorspace `string`
+- sigma `float`
+- minampl `float`
 - field `string` - Only POST and `multipart/form` payloads
 
 #### GET | POST /convert
@@ -754,12 +935,102 @@ Accepts: `image/*, multipart/form-data`. Content-Type: `image/*`
 - rotate `int`
 - norotation `bool`
 - noprofile `bool`
+- stripmeta `bool`
 - flip `bool`
 - flop `bool`
 - extend `string`
 - background `string` - Example: `?background=250,20,10`
 - colorspace `string`
+- sigma `float`
+- minampl `float`
 - field `string` - Only POST and `multipart/form` payloads
+
+#### GET | POST /pipeline
+Accepts: `image/*, multipart/form-data`. Content-Type: `image/*`
+
+This endpoint allow the user to declare a pipeline of multiple independent image transformation operations all in a single HTTP request.
+
+**Note**: a maximum of 10 independent operations are current allowed within the same HTTP request.
+
+Internally, it operates pretty much as a sequential reducer pattern chain, where given an input image and a set of operations, for each independent image operation iteration, the output result image will be passed to the next one, as the accumulated result, until finishing all the operations.
+
+In imperative programming, this would be pretty much analog to the following code:
+```js
+var image
+for operation in operations {
+  image = operation.Run(image, operation.Options)
+}
+```
+
+##### Allowed params
+
+- operations `json` `required` - URL safe encoded JSON with a list of operations. See below for interface details.
+- file `string` - Only GET method and if the `-mount` flag is present
+- url `string` - Only GET method and if the `-enable-url-source` flag is present
+
+##### Operations JSON specification
+
+Self-documented JSON operation schema:
+```js
+[
+  {
+    "operation": string, // Operation name identifier. Required.
+    "ignore_failure": boolean, // Ignore error in case of failure and continue with the next operation. Optional.
+    "params": map[string]mixed, // Object defining operation specific image transformation params, same as supported URL query params per each endpoint.
+  }
+]
+```
+
+###### Supported operations names
+
+- **crop** - Same as [`/crop`](#get--post-crop) endpoint.
+- **smartcrop** - Same as [`/smartcrop`](#get--post-smartcrop) endpoint.
+- **resize** - Same as [`/resize`](#get--post-resize) endpoint.
+- **enlarge** - Same as [`/enlarge`](#get--post-enlarge) endpoint.
+- **extract** - Same as [`/extract`](#get--post-extract) endpoint.
+- **rotate** - Same as [`/rotate`](#get--post-rotate) endpoint.
+- **flip** - Same as [`/flip`](#get--post-flip) endpoint.
+- **flop** - Same as [`/flop`](#get--post-flop) endpoint.
+- **thumbnail** - Same as [`/thumbnail`](#get--post-thumbnail) endpoint.
+- **zoom** - Same as [`/zoom`](#get--post-zoom) endpoint.
+- **convert** - Same as [`/convert`](#get--post-convert) endpoint.
+- **watermark** - Same as [`/watermark`](#get--post-watermark) endpoint.
+- **blur** - Same as [`/blur`](#get--post-blur) endpoint.
+
+###### Example
+
+```json
+[
+  {
+    "operation": "crop",
+    "params": {
+      "width": 500,
+      "height": 300
+    }
+  },
+  {
+    "operation": "watermark",
+    "params": {
+      "text": "I need some covfete",
+      "font": "Verdana",
+      "textwidth": 100,
+      "opacity": 0.8
+    }
+  },
+  {
+    "operation": "rotate",
+    "params": {
+      "rotate": 180
+    }
+  },
+  {
+    "operation": "convert",
+    "params": {
+      "type": "webp"
+    }
+  }
+]
+```
 
 #### GET | POST /watermark
 Accepts: `image/*, multipart/form-data`. Content-Type: `image/*`
@@ -784,12 +1055,122 @@ Accepts: `image/*, multipart/form-data`. Content-Type: `image/*`
 - rotate `int`
 - norotation `bool`
 - noprofile `bool`
+- stripmeta `bool`
+- flip `bool`
+- flop `bool`
+- extend `string`
+- background `string` - Example: `?background=250,20,10`
+- colorspace `string`
+- sigma `float`
+- minampl `float`
+- field `string` - Only POST and `multipart/form` payloads
+
+#### GET | POST /blur
+Accepts: `image/*, multipart/form-data`. Content-Type: `image/*`
+
+##### Allowed params
+
+- sigma `float` `required`
+- minampl `float`
+- width `int`
+- height `int`
+- quality `int` (JPEG-only)
+- compression `int` (PNG-only)
+- type `string`
+- file `string` - Only GET method and if the `-mount` flag is present
+- url `string` - Only GET method and if the `-enable-url-source` flag is present
+- embed `bool`
+- force `bool`
+- norotation `bool`
+- noprofile `bool`
+- stripmeta `bool`
 - flip `bool`
 - flop `bool`
 - extend `string`
 - background `string` - Example: `?background=250,20,10`
 - colorspace `string`
 - field `string` - Only POST and `multipart/form` payloads
+
+## Support
+
+### Backers
+
+Support us with a monthly donation and help us continue our activities. [[Become a backer](https://opencollective.com/imaginary#backer)]
+
+<a href="https://opencollective.com/imaginary/backer/0/website" target="_blank"><img src="https://opencollective.com/imaginary/backer/0/avatar.svg"></a>
+<a href="https://opencollective.com/imaginary/backer/1/website" target="_blank"><img src="https://opencollective.com/imaginary/backer/1/avatar.svg"></a>
+<a href="https://opencollective.com/imaginary/backer/2/website" target="_blank"><img src="https://opencollective.com/imaginary/backer/2/avatar.svg"></a>
+<a href="https://opencollective.com/imaginary/backer/3/website" target="_blank"><img src="https://opencollective.com/imaginary/backer/3/avatar.svg"></a>
+<a href="https://opencollective.com/imaginary/backer/4/website" target="_blank"><img src="https://opencollective.com/imaginary/backer/4/avatar.svg"></a>
+<a href="https://opencollective.com/imaginary/backer/5/website" target="_blank"><img src="https://opencollective.com/imaginary/backer/5/avatar.svg"></a>
+<a href="https://opencollective.com/imaginary/backer/6/website" target="_blank"><img src="https://opencollective.com/imaginary/backer/6/avatar.svg"></a>
+<a href="https://opencollective.com/imaginary/backer/7/website" target="_blank"><img src="https://opencollective.com/imaginary/backer/7/avatar.svg"></a>
+<a href="https://opencollective.com/imaginary/backer/8/website" target="_blank"><img src="https://opencollective.com/imaginary/backer/8/avatar.svg"></a>
+<a href="https://opencollective.com/imaginary/backer/9/website" target="_blank"><img src="https://opencollective.com/imaginary/backer/9/avatar.svg"></a>
+<a href="https://opencollective.com/imaginary/backer/10/website" target="_blank"><img src="https://opencollective.com/imaginary/backer/10/avatar.svg"></a>
+<a href="https://opencollective.com/imaginary/backer/11/website" target="_blank"><img src="https://opencollective.com/imaginary/backer/11/avatar.svg"></a>
+<a href="https://opencollective.com/imaginary/backer/12/website" target="_blank"><img src="https://opencollective.com/imaginary/backer/12/avatar.svg"></a>
+<a href="https://opencollective.com/imaginary/backer/13/website" target="_blank"><img src="https://opencollective.com/imaginary/backer/13/avatar.svg"></a>
+<a href="https://opencollective.com/imaginary/backer/14/website" target="_blank"><img src="https://opencollective.com/imaginary/backer/14/avatar.svg"></a>
+<a href="https://opencollective.com/imaginary/backer/15/website" target="_blank"><img src="https://opencollective.com/imaginary/backer/15/avatar.svg"></a>
+<a href="https://opencollective.com/imaginary/backer/16/website" target="_blank"><img src="https://opencollective.com/imaginary/backer/16/avatar.svg"></a>
+<a href="https://opencollective.com/imaginary/backer/17/website" target="_blank"><img src="https://opencollective.com/imaginary/backer/17/avatar.svg"></a>
+<a href="https://opencollective.com/imaginary/backer/18/website" target="_blank"><img src="https://opencollective.com/imaginary/backer/18/avatar.svg"></a>
+<a href="https://opencollective.com/imaginary/backer/19/website" target="_blank"><img src="https://opencollective.com/imaginary/backer/19/avatar.svg"></a>
+<a href="https://opencollective.com/imaginary/backer/20/website" target="_blank"><img src="https://opencollective.com/imaginary/backer/20/avatar.svg"></a>
+<a href="https://opencollective.com/imaginary/backer/21/website" target="_blank"><img src="https://opencollective.com/imaginary/backer/21/avatar.svg"></a>
+<a href="https://opencollective.com/imaginary/backer/22/website" target="_blank"><img src="https://opencollective.com/imaginary/backer/22/avatar.svg"></a>
+<a href="https://opencollective.com/imaginary/backer/23/website" target="_blank"><img src="https://opencollective.com/imaginary/backer/23/avatar.svg"></a>
+<a href="https://opencollective.com/imaginary/backer/24/website" target="_blank"><img src="https://opencollective.com/imaginary/backer/24/avatar.svg"></a>
+<a href="https://opencollective.com/imaginary/backer/25/website" target="_blank"><img src="https://opencollective.com/imaginary/backer/25/avatar.svg"></a>
+<a href="https://opencollective.com/imaginary/backer/26/website" target="_blank"><img src="https://opencollective.com/imaginary/backer/26/avatar.svg"></a>
+<a href="https://opencollective.com/imaginary/backer/27/website" target="_blank"><img src="https://opencollective.com/imaginary/backer/27/avatar.svg"></a>
+<a href="https://opencollective.com/imaginary/backer/28/website" target="_blank"><img src="https://opencollective.com/imaginary/backer/28/avatar.svg"></a>
+<a href="https://opencollective.com/imaginary/backer/29/website" target="_blank"><img src="https://opencollective.com/imaginary/backer/29/avatar.svg"></a>
+
+### Support this project
+
+[![OpenCollective](https://opencollective.com/imaginary/backers/badge.svg)](#backers)
+
+### Sponsors
+
+Become a sponsor and get your logo on our README on Github with a link to your site. [[Become a sponsor](https://opencollective.com/imaginary#sponsor)]
+
+<a href="https://opencollective.com/imaginary/sponsor/0/website" target="_blank"><img src="https://opencollective.com/imaginary/sponsor/0/avatar.svg"></a>
+<a href="https://opencollective.com/imaginary/sponsor/1/website" target="_blank"><img src="https://opencollective.com/imaginary/sponsor/1/avatar.svg"></a>
+<a href="https://opencollective.com/imaginary/sponsor/2/website" target="_blank"><img src="https://opencollective.com/imaginary/sponsor/2/avatar.svg"></a>
+<a href="https://opencollective.com/imaginary/sponsor/3/website" target="_blank"><img src="https://opencollective.com/imaginary/sponsor/3/avatar.svg"></a>
+<a href="https://opencollective.com/imaginary/sponsor/4/website" target="_blank"><img src="https://opencollective.com/imaginary/sponsor/4/avatar.svg"></a>
+<a href="https://opencollective.com/imaginary/sponsor/5/website" target="_blank"><img src="https://opencollective.com/imaginary/sponsor/5/avatar.svg"></a>
+<a href="https://opencollective.com/imaginary/sponsor/6/website" target="_blank"><img src="https://opencollective.com/imaginary/sponsor/6/avatar.svg"></a>
+<a href="https://opencollective.com/imaginary/sponsor/7/website" target="_blank"><img src="https://opencollective.com/imaginary/sponsor/7/avatar.svg"></a>
+<a href="https://opencollective.com/imaginary/sponsor/8/website" target="_blank"><img src="https://opencollective.com/imaginary/sponsor/8/avatar.svg"></a>
+<a href="https://opencollective.com/imaginary/sponsor/9/website" target="_blank"><img src="https://opencollective.com/imaginary/sponsor/9/avatar.svg"></a>
+<a href="https://opencollective.com/imaginary/sponsor/10/website" target="_blank"><img src="https://opencollective.com/imaginary/sponsor/10/avatar.svg"></a>
+<a href="https://opencollective.com/imaginary/sponsor/11/website" target="_blank"><img src="https://opencollective.com/imaginary/sponsor/11/avatar.svg"></a>
+<a href="https://opencollective.com/imaginary/sponsor/12/website" target="_blank"><img src="https://opencollective.com/imaginary/sponsor/12/avatar.svg"></a>
+<a href="https://opencollective.com/imaginary/sponsor/13/website" target="_blank"><img src="https://opencollective.com/imaginary/sponsor/13/avatar.svg"></a>
+<a href="https://opencollective.com/imaginary/sponsor/14/website" target="_blank"><img src="https://opencollective.com/imaginary/sponsor/14/avatar.svg"></a>
+<a href="https://opencollective.com/imaginary/sponsor/15/website" target="_blank"><img src="https://opencollective.com/imaginary/sponsor/15/avatar.svg"></a>
+<a href="https://opencollective.com/imaginary/sponsor/16/website" target="_blank"><img src="https://opencollective.com/imaginary/sponsor/16/avatar.svg"></a>
+<a href="https://opencollective.com/imaginary/sponsor/17/website" target="_blank"><img src="https://opencollective.com/imaginary/sponsor/17/avatar.svg"></a>
+<a href="https://opencollective.com/imaginary/sponsor/18/website" target="_blank"><img src="https://opencollective.com/imaginary/sponsor/18/avatar.svg"></a>
+<a href="https://opencollective.com/imaginary/sponsor/19/website" target="_blank"><img src="https://opencollective.com/imaginary/sponsor/19/avatar.svg"></a>
+<a href="https://opencollective.com/imaginary/sponsor/20/website" target="_blank"><img src="https://opencollective.com/imaginary/sponsor/20/avatar.svg"></a>
+<a href="https://opencollective.com/imaginary/sponsor/21/website" target="_blank"><img src="https://opencollective.com/imaginary/sponsor/21/avatar.svg"></a>
+<a href="https://opencollective.com/imaginary/sponsor/22/website" target="_blank"><img src="https://opencollective.com/imaginary/sponsor/22/avatar.svg"></a>
+<a href="https://opencollective.com/imaginary/sponsor/23/website" target="_blank"><img src="https://opencollective.com/imaginary/sponsor/23/avatar.svg"></a>
+<a href="https://opencollective.com/imaginary/sponsor/24/website" target="_blank"><img src="https://opencollective.com/imaginary/sponsor/24/avatar.svg"></a>
+<a href="https://opencollective.com/imaginary/sponsor/25/website" target="_blank"><img src="https://opencollective.com/imaginary/sponsor/25/avatar.svg"></a>
+<a href="https://opencollective.com/imaginary/sponsor/26/website" target="_blank"><img src="https://opencollective.com/imaginary/sponsor/26/avatar.svg"></a>
+<a href="https://opencollective.com/imaginary/sponsor/27/website" target="_blank"><img src="https://opencollective.com/imaginary/sponsor/27/avatar.svg"></a>
+<a href="https://opencollective.com/imaginary/sponsor/28/website" target="_blank"><img src="https://opencollective.com/imaginary/sponsor/28/avatar.svg"></a>
+<a href="https://opencollective.com/imaginary/sponsor/29/website" target="_blank"><img src="https://opencollective.com/imaginary/sponsor/29/avatar.svg"></a>
+
+## Authors
+
+- [Tomás Aparicio](https://github.com/h2non) - Original author and maintainer.
+- [Kirill Danshin](https://github.com/kirillDanshin) - Co-maintainer since April 2017.
 
 ## License
 
