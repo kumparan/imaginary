@@ -26,6 +26,7 @@ type ImageOptions struct {
 	NoRotation    bool
 	NoProfile     bool
 	StripMetadata bool
+	Interlace     bool
 	Opacity       float32
 	Sigma         float64
 	MinAmpl       float64
@@ -71,6 +72,7 @@ func BimgOptions(o ImageOptions) bimg.Options {
 		StripMetadata:  o.StripMetadata,
 		Type:           ImageType(o.Type),
 		Rotate:         bimg.Angle(o.Rotate),
+		Interlace:      o.Interlace,
 	}
 
 	if len(o.Background) != 0 {
