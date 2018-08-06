@@ -549,6 +549,8 @@ Image measures are always in pixels, unless otherwise indicated.
 - **minampl**     `float`  - Minimum amplitude of the gaussian filter to use when blurring an image. Default: Example: `0.5`
 - **operations**  `json`   - Pipeline of image operation transformations defined as URL safe encoded JSON array. See [pipeline](#get--post-pipeline) endpoints for more details.
 - **sign**        `string` - URL signature (URL-safe Base64-encoded HMAC digest)
+- **interlace**   `bool`   - Use Progressive Image Rendering. Defaults to `false`
+- **aspectratio** `string`  - Force image's aspect ratio. Image will be croppped. IMPORTANT: If width and height provided, this will be skipped. If nocrop=true, then nocrop will be overridden. Format: `16:9`
 
 #### GET /
 Content-Type: `application/json`
