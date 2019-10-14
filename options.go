@@ -78,8 +78,9 @@ type PipelineOperation struct {
 type PipelineOperations []PipelineOperation
 
 func transformByAspectRatio(params map[string]interface{}) (width, height int) {
-	width = params["width"].(int)
-	height = params["height"].(int)
+	width, _ = coerceTypeInt(params["width"])
+	height, _ = coerceTypeInt(params["height"])
+
 	aspectRatio, ok := params["aspectratio"].(map[string]int)
 	if !ok {
 		return
