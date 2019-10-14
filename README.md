@@ -565,6 +565,7 @@ Image measures are always in pixels, unless otherwise indicated.
 - **operations**  `json`   - Pipeline of image operation transformations defined as URL safe encoded JSON array. See [pipeline](#get--post-pipeline) endpoints for more details.
 - **sign**        `string` - URL signature (URL-safe Base64-encoded HMAC digest)
 - **interlace**   `bool`   - Use progressive / interlaced format of the image output. Defaults to `false`
+- **aspectratio** `string` - Apply aspect ratio by giving either image's height or width. Exampe: `16:9`
 
 #### GET /
 Content-Type: `application/json`
@@ -654,6 +655,7 @@ Crop the image by a given width or height. Image ratio is maintained
 - gravity `string`
 - field `string` - Only POST and `multipart/form` payloads
 - interlace `bool`
+- aspectratio `string`
 
 #### GET | POST /smartcrop
 Accepts: `image/*, multipart/form-data`. Content-Type: `image/*`
@@ -685,6 +687,7 @@ Crop the image by a given width or height using the [libvips](https://github.com
 - gravity `string`
 - field `string` - Only POST and `multipart/form` payloads
 - interlace `bool`
+- aspectratio `string`
 
 #### GET | POST /resize
 Accepts: `image/*, multipart/form-data`. Content-Type: `image/*`
@@ -716,6 +719,7 @@ Resize an image by width or height. Image aspect ratio is maintained
 - minampl `float`
 - field `string` - Only POST and `multipart/form` payloads
 - interlace `bool`
+- aspectratio `string`
 
 #### GET | POST /enlarge
 Accepts: `image/*, multipart/form-data`. Content-Type: `image/*`
@@ -745,6 +749,7 @@ Accepts: `image/*, multipart/form-data`. Content-Type: `image/*`
 - minampl `float`
 - field `string` - Only POST and `multipart/form` payloads
 - interlace `bool`
+- aspectratio `string`
 
 #### GET | POST /extract
 Accepts: `image/*, multipart/form-data`. Content-Type: `image/*`
@@ -777,6 +782,7 @@ Accepts: `image/*, multipart/form-data`. Content-Type: `image/*`
 - minampl `float`
 - field `string` - Only POST and `multipart/form` payloads
 - interlace `bool`
+- aspectratio `string`
 
 #### GET | POST /zoom
 Accepts: `image/*, multipart/form-data`. Content-Type: `image/*`
@@ -807,6 +813,7 @@ Accepts: `image/*, multipart/form-data`. Content-Type: `image/*`
 - minampl `float`
 - field `string` - Only POST and `multipart/form` payloads
 - interlace `bool`
+- aspectratio `string`
 
 #### GET | POST /thumbnail
 Accepts: `image/*, multipart/form-data`. Content-Type: `image/*`
@@ -835,6 +842,7 @@ Accepts: `image/*, multipart/form-data`. Content-Type: `image/*`
 - minampl `float`
 - field `string` - Only POST and `multipart/form` payloads
 - interlace `bool`
+- aspectratio `string`
 
 #### GET | POST /fit
 Accepts: `image/*, multipart/form-data`. Content-Type: `image/*`
@@ -866,6 +874,7 @@ The width and height specify a maximum bounding box for the image.
 - minampl `float`
 - field `string` - Only POST and `multipart/form` payloads
 - interlace `bool`
+- aspectratio `string`
 
 #### GET | POST /rotate
 Accepts: `image/*, multipart/form-data`. Content-Type: `image/*`
@@ -894,6 +903,7 @@ Accepts: `image/*, multipart/form-data`. Content-Type: `image/*`
 - minampl `float`
 - field `string` - Only POST and `multipart/form` payloads
 - interlace `bool`
+- aspectratio `string`
 
 #### GET | POST /flip
 Accepts: `image/*, multipart/form-data`. Content-Type: `image/*`
@@ -921,6 +931,7 @@ Accepts: `image/*, multipart/form-data`. Content-Type: `image/*`
 - minampl `float`
 - field `string` - Only POST and `multipart/form` payloads
 - interlace `bool`
+- aspectratio `string`
 
 #### GET | POST /flop
 Accepts: `image/*, multipart/form-data`. Content-Type: `image/*`
@@ -948,6 +959,7 @@ Accepts: `image/*, multipart/form-data`. Content-Type: `image/*`
 - minampl `float`
 - field `string` - Only POST and `multipart/form` payloads
 - interlace `bool`
+- aspectratio `string`
 
 #### GET | POST /convert
 Accepts: `image/*, multipart/form-data`. Content-Type: `image/*`
@@ -974,6 +986,7 @@ Accepts: `image/*, multipart/form-data`. Content-Type: `image/*`
 - minampl `float`
 - field `string` - Only POST and `multipart/form` payloads
 - interlace `bool`
+- aspectratio `string`
 
 #### GET | POST /pipeline
 Accepts: `image/*, multipart/form-data`. Content-Type: `image/*`
@@ -1096,6 +1109,7 @@ Accepts: `image/*, multipart/form-data`. Content-Type: `image/*`
 - minampl `float`
 - field `string` - Only POST and `multipart/form` payloads
 - interlace `bool`
+- aspectratio `string`
 
 #### GET | POST /watermarkimage
 Accepts: `image/*, multipart/form-data`. Content-Type: `image/*`
@@ -1126,6 +1140,7 @@ Accepts: `image/*, multipart/form-data`. Content-Type: `image/*`
 - minampl `float`
 - field `string` - Only POST and `multipart/form` payloads
 - interlace `bool`
+- aspectratio `string`
 
 #### GET | POST /blur
 Accepts: `image/*, multipart/form-data`. Content-Type: `image/*`
@@ -1153,6 +1168,7 @@ Accepts: `image/*, multipart/form-data`. Content-Type: `image/*`
 - colorspace `string`
 - field `string` - Only POST and `multipart/form` payloads
 - interlace `bool`
+- aspectratio `string`
 
 ## Support
 
