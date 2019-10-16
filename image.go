@@ -100,6 +100,12 @@ func Resize(buf []byte, o ImageOptions) (Image, error) {
 	return Process(buf, opts)
 }
 
+func Manipulate(buf []byte, o ImageOptions) (Image, error) {
+	//for manipulating without width or height input
+	opts := BimgOptions(o)
+	return Process(buf, opts)
+}
+
 func Fit(buf []byte, o ImageOptions) (Image, error) {
 	if o.Width == 0 || o.Height == 0 {
 		return Image{}, NewError("Missing required params: height, width", BadRequest)
