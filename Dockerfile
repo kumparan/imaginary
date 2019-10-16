@@ -44,7 +44,7 @@ WORKDIR ${GOPATH}/src/github.com/h2non/imaginary
 COPY . .
 
 # Making sure all dependencies are up-to-date
-RUN rm -rf vendor && dep ensure
+RUN dep init && rm -rf vendor && dep ensure
 
 # Run quality control
 RUN GO111MODULE=off go test -test.v -test.race -test.covermode=atomic ./...
