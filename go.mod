@@ -1,6 +1,6 @@
 module github.com/kumparan/imaginary
 
-go 1.12
+go 1.13
 
 require (
 	github.com/garyburd/redigo v1.6.0 // indirect
