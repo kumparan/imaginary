@@ -441,5 +441,6 @@ func mockCacher() cacher.Keeper {
 	k := cacher.NewKeeper()
 	redis := db.NewRedisConnPool("redis://" + m.Addr())
 	k.SetConnectionPool(redis)
+	k.SetLockConnectionPool(redis)
 	return k
 }

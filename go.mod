@@ -4,6 +4,7 @@ go 1.13
 
 require (
 	github.com/alicebob/miniredis v2.5.0+incompatible
+	github.com/go-redsync/redsync v1.1.1
 	github.com/gomodule/redigo v2.0.0+incompatible
 	github.com/kumparan/cacher v1.7.0
 	github.com/kumparan/go-lib v1.0.0

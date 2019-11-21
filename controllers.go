@@ -3,13 +3,16 @@ package main
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/kumparan/cacher"
-	"github.com/kumparan/imaginary/config"
-	log "github.com/sirupsen/logrus"
 	"mime"
 	"net/http"
 	"strconv"
 	"strings"
+
+	"github.com/go-redsync/redsync"
+
+	"github.com/kumparan/cacher"
+	"github.com/kumparan/imaginary/config"
+	log "github.com/sirupsen/logrus"
 
 	"gopkg.in/h2non/bimg.v1"
 	"gopkg.in/h2non/filetype.v0"
@@ -40,8 +43,15 @@ func healthController(w http.ResponseWriter, r *http.Request) {
 func imageController(o ServerOptions, operation Operation) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, req *http.Request) {
 		var image = Image{}
-		image.Body = findFromCacheByID(o, imaginaryResponseCacheKey(req.RequestURI))
-		if len(image.Body) > 0 {
+		byteFromCache, mu := findFromCacheByID(o, imaginaryResponseCacheKey(req.RequestURI))
+		defer func() {
+			if mu != nil {
+				mu.Unlock()
+			}
+		}()
+
+		if len(byteFromCache) > 0 {
+			image.Body = byteFromCache
 			opts, err := buildParamsFromQuery(req.URL.Query())
 			if err != nil {
 				ErrorReply(req, w, NewError("Error while processing parameters, "+err.Error(), BadRequest), o)
@@ -84,7 +94,16 @@ func imageController(o ServerOptions, operation Operation) func(http.ResponseWri
 			return
 		}
 
-		imageHandler(w, req, buf, operation, o)
+		resImage := imageHandler(w, req, buf, operation, o)
+		if len(resImage.Body) > 0 {
+			err = o.Cacher.Store(mu, cacher.NewItemWithCustomTTL(imaginaryResponseCacheKey(req.RequestURI), resImage.Body, config.CacheTTL()))
+			if err != nil {
+				fmt.Println("ada err:", err)
+				log.WithFields(log.Fields{
+					"request": req.RequestURI}).
+					Error(err)
+			}
+		}
 	}
 }
 
@@ -104,7 +123,7 @@ func determineAcceptMimeType(accept string) string {
 	return ""
 }
 
-func imageHandler(w http.ResponseWriter, r *http.Request, buf []byte, operation Operation, o ServerOptions) {
+func imageHandler(w http.ResponseWriter, r *http.Request, buf []byte, operation Operation, o ServerOptions) (imageRes Image) {
 	// Infer the body MIME type via mime sniff algorithm
 	mimeType := http.DetectContentType(buf)
 
@@ -157,13 +176,8 @@ func imageHandler(w http.ResponseWriter, r *http.Request, buf []byte, operation 
 		w.Header().Set("Vary", vary)
 	}
 	_, _ = w.Write(image.Body)
-
-	err = o.Cacher.StoreWithoutBlocking(cacher.NewItemWithCustomTTL(imaginaryResponseCacheKey(r.RequestURI), image.Body, config.CacheTTL()))
-	if err != nil {
-		log.WithFields(log.Fields{
-			"request": r.RequestURI}).
-			Error(err)
-	}
+	imageRes = image
+	return
 }
 
 func formController(w http.ResponseWriter, r *http.Request) {
@@ -208,8 +222,8 @@ func formController(w http.ResponseWriter, r *http.Request) {
 	_, _ = w.Write([]byte(html))
 }
 
-func findFromCacheByID(o ServerOptions, key string) (res []byte) {
-	reply, err := o.Cacher.Get(key)
+func findFromCacheByID(o ServerOptions, key string) (res []byte, mu *redsync.Mutex) {
+	reply, mu, err := o.Cacher.GetOrLock(key)
 	if err != nil {
 		return
 	}
