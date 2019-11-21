@@ -12,6 +12,11 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/kumparan/imaginary/db"
+
+	"github.com/alicebob/miniredis"
+	"github.com/kumparan/cacher"
+
 	"gopkg.in/h2non/bimg.v1"
 )
 
@@ -274,7 +279,7 @@ func TestFit(t *testing.T) {
 }
 
 func TestRemoteHTTPSource(t *testing.T) {
-	opts := ServerOptions{EnableURLSource: true}
+	opts := ServerOptions{EnableURLSource: true, Cacher: mockCacher()}
 	fn := ImageMiddleware(opts)(Crop)
 	LoadSources(opts)
 
@@ -315,7 +320,7 @@ func TestRemoteHTTPSource(t *testing.T) {
 }
 
 func TestInvalidRemoteHTTPSource(t *testing.T) {
-	opts := ServerOptions{EnableURLSource: true}
+	opts := ServerOptions{EnableURLSource: true, Cacher: mockCacher()}
 	fn := ImageMiddleware(opts)(Crop)
 	LoadSources(opts)
 
@@ -338,7 +343,7 @@ func TestInvalidRemoteHTTPSource(t *testing.T) {
 }
 
 func TestMountDirectory(t *testing.T) {
-	opts := ServerOptions{Mount: "testdata"}
+	opts := ServerOptions{Mount: "testdata", Cacher: mockCacher()}
 	fn := ImageMiddleware(opts)(Crop)
 	LoadSources(opts)
 
@@ -373,7 +378,7 @@ func TestMountDirectory(t *testing.T) {
 }
 
 func TestMountInvalidDirectory(t *testing.T) {
-	fn := ImageMiddleware(ServerOptions{Mount: "_invalid_"})(Crop)
+	fn := ImageMiddleware(ServerOptions{Mount: "_invalid_", Cacher: mockCacher()})(Crop)
 	ts := httptest.NewServer(fn)
 	url := ts.URL + "?top=100&left=100&areawidth=200&areaheight=120&file=large.jpg"
 	defer ts.Close()
@@ -389,7 +394,7 @@ func TestMountInvalidDirectory(t *testing.T) {
 }
 
 func TestMountInvalidPath(t *testing.T) {
-	fn := ImageMiddleware(ServerOptions{Mount: "_invalid_"})(Crop)
+	fn := ImageMiddleware(ServerOptions{Mount: "_invalid_", Cacher: mockCacher()})(Crop)
 	ts := httptest.NewServer(fn)
 	url := ts.URL + "?top=100&left=100&areawidth=200&areaheight=120&file=../../large.jpg"
 	defer ts.Close()
@@ -407,7 +412,7 @@ func TestMountInvalidPath(t *testing.T) {
 func controller(op Operation) func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		buf, _ := ioutil.ReadAll(r.Body)
-		imageHandler(w, r, buf, op, ServerOptions{})
+		imageHandler(w, r, buf, op, ServerOptions{Cacher: mockCacher()})
 	}
 }
 
@@ -429,4 +434,12 @@ func assertSize(buf []byte, width, height int) error {
 		return fmt.Errorf("Invalid image size: %dx%d, expected: %dx%d", size.Width, size.Height, width, height)
 	}
 	return nil
+}
+
+func mockCacher() cacher.Keeper {
+	m, _ := miniredis.Run()
+	k := cacher.NewKeeper()
+	redis := db.NewRedisConnPool("redis://" + m.Addr())
+	k.SetConnectionPool(redis)
+	return k
 }

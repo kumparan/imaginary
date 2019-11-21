@@ -3,6 +3,9 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/kumparan/cacher"
+	"github.com/kumparan/imaginary/config"
+	log "github.com/sirupsen/logrus"
 	"mime"
 	"net/http"
 	"strconv"
@@ -36,6 +39,34 @@ func healthController(w http.ResponseWriter, r *http.Request) {
 
 func imageController(o ServerOptions, operation Operation) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, req *http.Request) {
+		var image = Image{}
+		image.Body = findFromCacheByID(o, imaginaryResponseCacheKey(req.RequestURI))
+		if len(image.Body) > 0 {
+			opts, err := buildParamsFromQuery(req.URL.Query())
+			if err != nil {
+				ErrorReply(req, w, NewError("Error while processing parameters, "+err.Error(), BadRequest), o)
+				return
+			}
+
+			vary := ""
+			if opts.Type == "auto" {
+				opts.Type = determineAcceptMimeType(req.Header.Get("Accept"))
+				vary = "Accept" // Ensure caches behave correctly for negotiated content
+			} else if opts.Type != "" && ImageType(opts.Type) == 0 {
+				ErrorReply(req, w, ErrOutputFormat, o)
+				return
+			}
+			image.Mime = GetImageMimeType(bimg.DetermineImageType(image.Body))
+			// Expose Content-Length response header
+			w.Header().Set("Content-Length", strconv.Itoa(len(image.Body)))
+			w.Header().Set("Content-Type", image.Mime)
+			if vary != "" {
+				w.Header().Set("Vary", vary)
+			}
+
+			_, _ = w.Write(image.Body)
+			return
+		}
 		var imageSource = MatchSource(req)
 		if imageSource == nil {
 			ErrorReply(req, w, ErrMissingImageSource, o)
@@ -126,6 +157,13 @@ func imageHandler(w http.ResponseWriter, r *http.Request, buf []byte, operation 
 		w.Header().Set("Vary", vary)
 	}
 	_, _ = w.Write(image.Body)
+
+	err = o.Cacher.StoreWithoutBlocking(cacher.NewItemWithCustomTTL(imaginaryResponseCacheKey(r.RequestURI), image.Body, config.CacheTTL()))
+	if err != nil {
+		log.WithFields(log.Fields{
+			"request": r.RequestURI}).
+			Error(err)
+	}
 }
 
 func formController(w http.ResponseWriter, r *http.Request) {
@@ -168,4 +206,28 @@ func formController(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "text/html")
 	_, _ = w.Write([]byte(html))
+}
+
+func findFromCacheByID(o ServerOptions, key string) (res []byte) {
+	reply, err := o.Cacher.Get(key)
+	if err != nil {
+		return
+	}
+
+	if reply == nil {
+		return
+	}
+
+	b, ok := reply.([]byte)
+	if ok == true {
+		res = b
+		return
+	}
+
+	return
+
+}
+
+func imaginaryResponseCacheKey(req string) string {
+	return fmt.Sprintf("cache:response:image:%s", req)
 }
