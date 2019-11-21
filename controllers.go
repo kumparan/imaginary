@@ -98,7 +98,6 @@ func imageController(o ServerOptions, operation Operation) func(http.ResponseWri
 		if len(resImage.Body) > 0 {
 			err = o.Cacher.Store(mu, cacher.NewItemWithCustomTTL(imaginaryResponseCacheKey(req.RequestURI), resImage.Body, config.CacheTTL()))
 			if err != nil {
-				fmt.Println("ada err:", err)
 				log.WithFields(log.Fields{
 					"request": req.RequestURI}).
 					Error(err)
@@ -232,12 +231,7 @@ func findFromCacheByID(o ServerOptions, key string) (res []byte, mu *redsync.Mut
 		return
 	}
 
-	b, ok := reply.([]byte)
-	if ok == true {
-		res = b
-		return
-	}
-
+	res = reply.([]byte)
 	return
 
 }
