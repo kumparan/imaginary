@@ -1,0 +1,5 @@
+env: "development"
+redis:
+    cache_host: "$dev_redis_host_imaginary_service"
+    lock_host: "$dev_redis_lock_host_imaginary_service"
+cache_ttl: 10000

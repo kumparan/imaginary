@@ -25,6 +25,7 @@ func (s *HTTPImageSource) Matches(r *http.Request) bool {
 }
 
 func (s *HTTPImageSource) GetImage(req *http.Request) ([]byte, error) {
+	// TODO: Download Raw Image From S3
 	url, err := parseURL(req)
 	if err != nil {
 		return nil, ErrInvalidImageURL

@@ -8,6 +8,10 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/kumparan/cacher"
+	"github.com/kumparan/imaginary/config"
+	"github.com/kumparan/imaginary/db"
 )
 
 type ServerOptions struct {
@@ -37,6 +41,7 @@ type ServerOptions struct {
 	PlaceholderImage   []byte
 	Endpoints          Endpoints
 	AllowedOrigins     []*url.URL
+	Cacher             cacher.Keeper
 }
 
 // Endpoints represents a list of endpoint names to disable.
@@ -55,6 +60,21 @@ func (e Endpoints) IsValid(r *http.Request) bool {
 }
 
 func Server(o ServerOptions) error {
+	config.GetConf()
+	cacheKeeper := cacher.NewKeeper()
+	// Initialize Redis
+	if !config.DisableCaching() {
+		redisConn := db.NewRedisConnPool(config.RedisCacheHost())
+		redisLockConn := db.NewRedisConnPool(config.RedisLockHost())
+
+		cacheKeeper.SetConnectionPool(redisConn)
+		cacheKeeper.SetLockConnectionPool(redisLockConn)
+		cacheKeeper.SetDefaultTTL(config.CacheTTL())
+	}
+
+	cacheKeeper.SetDisableCaching(config.DisableCaching())
+	o.Cacher = cacheKeeper
+
 	addr := o.Address + ":" + strconv.Itoa(o.Port)
 	handler := NewLog(NewServerMux(o), os.Stdout)
 

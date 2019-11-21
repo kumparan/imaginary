@@ -8,6 +8,12 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/go-redsync/redsync"
+
+	"github.com/kumparan/cacher"
+	"github.com/kumparan/imaginary/config"
+	log "github.com/sirupsen/logrus"
+
 	"gopkg.in/h2non/bimg.v1"
 	"gopkg.in/h2non/filetype.v0"
 )
@@ -36,6 +42,41 @@ func healthController(w http.ResponseWriter, r *http.Request) {
 
 func imageController(o ServerOptions, operation Operation) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, req *http.Request) {
+		var image = Image{}
+		byteFromCache, mu := findFromCacheByID(o, imaginaryResponseCacheKey(req.RequestURI))
+		defer func() {
+			if mu != nil {
+				mu.Unlock()
+			}
+		}()
+
+		if len(byteFromCache) > 0 {
+			image.Body = byteFromCache
+			opts, err := buildParamsFromQuery(req.URL.Query())
+			if err != nil {
+				ErrorReply(req, w, NewError("Error while processing parameters, "+err.Error(), BadRequest), o)
+				return
+			}
+
+			vary := ""
+			if opts.Type == "auto" {
+				opts.Type = determineAcceptMimeType(req.Header.Get("Accept"))
+				vary = "Accept" // Ensure caches behave correctly for negotiated content
+			} else if opts.Type != "" && ImageType(opts.Type) == 0 {
+				ErrorReply(req, w, ErrOutputFormat, o)
+				return
+			}
+			image.Mime = GetImageMimeType(bimg.DetermineImageType(image.Body))
+			// Expose Content-Length response header
+			w.Header().Set("Content-Length", strconv.Itoa(len(image.Body)))
+			w.Header().Set("Content-Type", image.Mime)
+			if vary != "" {
+				w.Header().Set("Vary", vary)
+			}
+
+			_, _ = w.Write(image.Body)
+			return
+		}
 		var imageSource = MatchSource(req)
 		if imageSource == nil {
 			ErrorReply(req, w, ErrMissingImageSource, o)
@@ -53,7 +94,15 @@ func imageController(o ServerOptions, operation Operation) func(http.ResponseWri
 			return
 		}
 
-		imageHandler(w, req, buf, operation, o)
+		resImage := imageHandler(w, req, buf, operation, o)
+		if len(resImage.Body) > 0 {
+			err = o.Cacher.Store(mu, cacher.NewItemWithCustomTTL(imaginaryResponseCacheKey(req.RequestURI), resImage.Body, config.CacheTTL()))
+			if err != nil {
+				log.WithFields(log.Fields{
+					"request": req.RequestURI}).
+					Error(err)
+			}
+		}
 	}
 }
 
@@ -73,7 +122,7 @@ func determineAcceptMimeType(accept string) string {
 	return ""
 }
 
-func imageHandler(w http.ResponseWriter, r *http.Request, buf []byte, operation Operation, o ServerOptions) {
+func imageHandler(w http.ResponseWriter, r *http.Request, buf []byte, operation Operation, o ServerOptions) (imageRes Image) {
 	// Infer the body MIME type via mime sniff algorithm
 	mimeType := http.DetectContentType(buf)
 
@@ -126,6 +175,8 @@ func imageHandler(w http.ResponseWriter, r *http.Request, buf []byte, operation 
 		w.Header().Set("Vary", vary)
 	}
 	_, _ = w.Write(image.Body)
+	imageRes = image
+	return
 }
 
 func formController(w http.ResponseWriter, r *http.Request) {
@@ -168,4 +219,23 @@ func formController(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "text/html")
 	_, _ = w.Write([]byte(html))
+}
+
+func findFromCacheByID(o ServerOptions, key string) (res []byte, mu *redsync.Mutex) {
+	reply, mu, err := o.Cacher.GetOrLock(key)
+	if err != nil {
+		return
+	}
+
+	if reply == nil {
+		return
+	}
+
+	res = reply.([]byte)
+	return
+
+}
+
+func imaginaryResponseCacheKey(req string) string {
+	return fmt.Sprintf("cache:response:image:%s", req)
 }

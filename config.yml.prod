@@ -1,0 +1,5 @@
+env: "production"
+redis:
+    cache_host: "$prod_redis_host_imaginary_service"
+    lock_host: "$prod_redis_lock_host_imaginary_service"
+cache_ttl: 10000
