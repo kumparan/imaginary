@@ -55,3 +55,23 @@ func CacheTTL() time.Duration {
 
 	return time.Duration(viper.GetInt("cache_ttl")) * time.Millisecond
 }
+
+// AWSRegion :nodoc:
+func AWSRegion() string {
+	return viper.GetString("aws.region")
+}
+
+// AWSS3Bucket :nodoc:
+func AWSS3Bucket() string {
+	return viper.GetString("aws.s3_bucket")
+}
+
+// AWSS3Key :nodoc:
+func AWSS3Key() string {
+	return viper.GetString("aws.s3_key")
+}
+
+// AWSS3Secret :nodoc:
+func AWSS3Secret() string {
+	return viper.GetString("aws.s3_secret")
+}
