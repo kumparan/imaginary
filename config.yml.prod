@@ -2,4 +2,9 @@ env: "production"
 redis:
     cache_host: "$prod_redis_host_imaginary_service"
     lock_host: "$prod_redis_lock_host_imaginary_service"
+aws:
+    region: "$media_region"
+    s3_key: "$media_s3_key"
+    s3_secret: "$media_s3_secret"
+    s3_bucket: "$prod_media_s3_bucket"
 cache_ttl: 10000
