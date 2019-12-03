@@ -3,6 +3,8 @@ package main
 import (
 	"net/http"
 	"net/url"
+
+	"github.com/aws/aws-sdk-go/service/s3"
 )
 
 type ImageSourceType string
@@ -16,6 +18,7 @@ type SourceConfig struct {
 	ForwardHeaders []string
 	AllowedOrigins []*url.URL
 	MaxAllowedSize int
+	S3Client       *s3.S3
 }
 
 var imageSourceMap = make(map[ImageSourceType]ImageSource)
@@ -40,6 +43,7 @@ func LoadSources(o ServerOptions) {
 			AllowedOrigins: o.AllowedOrigins,
 			MaxAllowedSize: o.MaxAllowedSize,
 			ForwardHeaders: o.ForwardHeaders,
+			S3Client:       o.S3Client,
 		})
 	}
 }

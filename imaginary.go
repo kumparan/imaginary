@@ -13,6 +13,12 @@ import (
 	"strings"
 	"time"
 
+	"github.com/kumparan/cacher"
+
+	"github.com/kumparan/imaginary/config"
+
+	"github.com/kumparan/imaginary/db"
+
 	bimg "gopkg.in/h2non/bimg.v1"
 )
 
@@ -125,6 +131,22 @@ func main() {
 	port := getPort(*aPort)
 	urlSignature := getURLSignature(*aURLSignatureKey)
 
+	config.GetConf()
+	//Initialize S3 Client
+	db.InitializeS3Conn()
+	cacheKeeper := cacher.NewKeeper()
+
+	// Initialize Redis Client
+	if !config.DisableCaching() {
+		redisConn := db.NewRedisConnPool(config.RedisCacheHost())
+		redisLockConn := db.NewRedisConnPool(config.RedisLockHost())
+
+		cacheKeeper.SetConnectionPool(redisConn)
+		cacheKeeper.SetLockConnectionPool(redisLockConn)
+		cacheKeeper.SetDefaultTTL(config.CacheTTL())
+	}
+
+	cacheKeeper.SetDisableCaching(config.DisableCaching())
 	opts := ServerOptions{
 		Port:               port,
 		Address:            *aAddr,
@@ -149,6 +171,8 @@ func main() {
 		ForwardHeaders:     parseForwardHeaders(*aForwardHeaders),
 		AllowedOrigins:     parseOrigins(*aAllowedOrigins),
 		MaxAllowedSize:     *aMaxAllowedSize,
+		Cacher:             cacheKeeper,
+		S3Client:           db.S3Client,
 	}
 
 	// Show warning if gzip flag is passed

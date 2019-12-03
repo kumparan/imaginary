@@ -2,4 +2,9 @@ env: "development"
 redis:
   cache_host: "redis://localhost:6379/0"
   lock_host: "redis://localhost:6379/1"
+aws:
+    region: "$media_region"
+    s3_key: "$media_s3_key"
+    s3_secret: "$media_s3_secret"
+    s3_bucket: "$dev_media_s3_bucket"
 cache_ttl: 10000
