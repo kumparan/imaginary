@@ -95,7 +95,13 @@ func imageController(o ServerOptions, operation Operation) func(http.ResponseWri
 		}
 
 		resImage := imageHandler(w, req, buf, operation, o)
-		if len(resImage.Body) > 0 {
+
+		// handle not cached because of error. just throw not found
+		if !config.DisableCaching() && mu == nil {
+			return
+		}
+
+		if req != nil && len(resImage.Body) > 0 {
 			err = o.Cacher.Store(mu, cacher.NewItemWithCustomTTL(imaginaryResponseCacheKey(req.RequestURI), resImage.Body, config.CacheTTL()))
 			if err != nil {
 				log.WithFields(log.Fields{
