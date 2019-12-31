@@ -9,6 +9,8 @@ import (
 	"math"
 	"net/http"
 
+	log "github.com/sirupsen/logrus"
+
 	"gopkg.in/h2non/bimg.v1"
 )
 
@@ -101,7 +103,23 @@ func Resize(buf []byte, o ImageOptions) (Image, error) {
 }
 
 func Manipulate(buf []byte, o ImageOptions) (Image, error) {
-	//for manipulating without width or height input
+	//manipulating with aspectratio only
+	if o.AspectRatio != "" {
+		meta, err := bimg.Metadata(buf)
+		if err != nil {
+			log.WithFields(log.Fields{
+				"option": o}).
+				Error(err)
+		}
+		if meta.Size.Height > meta.Size.Width && meta.Size.Width != 0 {
+			o.Width = meta.Size.Width
+		} else if meta.Size.Width > meta.Size.Height && meta.Size.Height != 0 {
+			o.Height = meta.Size.Height
+		}
+		return Resize(buf, o)
+	}
+
+	//manipulating without width, height, aspecratio input
 	opts := BimgOptions(o)
 	return Process(buf, opts)
 }
