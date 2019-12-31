@@ -76,6 +76,25 @@ func TestImageResize(t *testing.T) {
 
 }
 
+func TestImageManipulate(t *testing.T) {
+	t.Run("aspectratio defined", func(t *testing.T) {
+		opts := ImageOptions{Interlace: true, AspectRatio: "1:1"}
+		buf, _ := ioutil.ReadAll(readFile("imaginary.jpg"))
+
+		img, err := Manipulate(buf, opts)
+		if err != nil {
+			t.Errorf("Cannot process image: %s", err)
+		}
+		if img.Mime != "image/jpeg" {
+			t.Error("Invalid image MIME type")
+		}
+		// 550x740 -> 550x550
+		if assertSize(img.Body, 550, 550) != nil {
+			t.Errorf("Invalid image size, expected: %dx%d", opts.Width, opts.Height)
+		}
+	})
+}
+
 func TestImageFit(t *testing.T) {
 	opts := ImageOptions{Width: 300, Height: 300}
 	buf, _ := ioutil.ReadAll(readFile("imaginary.jpg"))
