@@ -1,4 +1,4 @@
-FROM 475170104714.dkr.ecr.ap-southeast-1.amazonaws.com/imaginary-service:builder as builder
+FROM 475170104714.dkr.ecr.ap-southeast-1.amazonaws.com/imaginary-service:builder-vips8.8.4 as builder
 
 ARG IMAGINARY_VERSION="dev"
 
