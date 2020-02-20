@@ -9,8 +9,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/fajrifernanda/bimg"
 	"github.com/rs/cors"
-	"gopkg.in/h2non/bimg.v1"
 	"gopkg.in/throttled/throttled.v2"
 	"gopkg.in/throttled/throttled.v2/store/memstore"
 )

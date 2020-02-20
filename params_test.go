@@ -5,7 +5,7 @@ import (
 	"net/url"
 	"testing"
 
-	"gopkg.in/h2non/bimg.v1"
+	"github.com/fajrifernanda/bimg"
 )
 
 const epsilon = 0.0001

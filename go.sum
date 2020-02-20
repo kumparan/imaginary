@@ -40,6 +40,12 @@ github.com/dgryski/go-sip13 v0.0.0-20181026042036-e10d5fee7954/go.mod h1:vAd38F8
 github.com/eapache/go-resiliency v1.1.0/go.mod h1:kFI+JgMyC7bLPUVY133qvEBtVayf5mFgVsvEsIPBvNs=
 github.com/eapache/go-xerial-snappy v0.0.0-20180814174437-776d5712da21/go.mod h1:+020luEh2TKB4/GOp8oxxtq0Daoen/Cii55CzbTV6DU=
 github.com/eapache/queue v1.1.0/go.mod h1:6eCeP0CKFpHLu8blIFXhExK/dRa7WDZfr6jVFPTqq+I=
+github.com/fajrifernanda/bimg v1.0.20-0.20200219101858-bc80acb2cac1 h1:QBLPeezLXSgvEAbYbr8eeC9zFUdIdflkjtXIBMkQ2zk=
+github.com/fajrifernanda/bimg v1.0.20-0.20200219101858-bc80acb2cac1/go.mod h1:sW8RH5mUUhIIjPhvaysH4dYLr9C2BGoOfrbtDSp8uqY=
+github.com/fajrifernanda/bimg v1.0.20-0.20200220092408-90626b794d21 h1:Iqt2uYxPplfWo7kgdFdIHYL8+gpRp19eXpYy0o3yVIM=
+github.com/fajrifernanda/bimg v1.0.20-0.20200220092408-90626b794d21/go.mod h1:sW8RH5mUUhIIjPhvaysH4dYLr9C2BGoOfrbtDSp8uqY=
+github.com/fajrifernanda/bimg v1.0.20-0.20200220092743-a5733ca9e523 h1:sTk3qw6Qius12jQz3EU8kT2GKpIOLkqKssb9R+VQUgs=
+github.com/fajrifernanda/bimg v1.0.20-0.20200220092743-a5733ca9e523/go.mod h1:sW8RH5mUUhIIjPhvaysH4dYLr9C2BGoOfrbtDSp8uqY=
 github.com/fatih/color v1.7.0/go.mod h1:Zm6kSWBoL9eyXnKyktHP6abPY2pDugNf5KwzbycvMj4=
 github.com/fsnotify/fsnotify v1.4.7 h1:IXs+QLmnXW2CcXuY+8Mzv/fWEsPGWxqefPtCP5CnV9I=
 github.com/fsnotify/fsnotify v1.4.7/go.mod h1:jwhsz4b93w/PPRr/qN1Yymfu8t87LnFCMoQvtojpjFo=
@@ -249,8 +255,6 @@ gopkg.in/alecthomas/kingpin.v2 v2.2.6/go.mod h1:FMv+mEhP44yOT+4EoQTLFTRgOQ1FBLks
 gopkg.in/check.v1 v0.0.0-20161208181325-20d25e280405/go.mod h1:Co6ibVJAznAaIkqp8huTwlJQCZ016jof/cbN4VW5Yz0=
 gopkg.in/check.v1 v1.0.0-20180628173108-788fd7840127 h1:qIbj1fsPNlZgppZ+VLlY7N33q108Sa+fhmuc+sWQYwY=
 gopkg.in/check.v1 v1.0.0-20180628173108-788fd7840127/go.mod h1:Co6ibVJAznAaIkqp8huTwlJQCZ016jof/cbN4VW5Yz0=
-gopkg.in/h2non/bimg.v1 v1.0.19 h1:Li7mgBrIvCHvShB4nyCcGJ2Z2rWR/95kgI/U2+U2eYw=
-gopkg.in/h2non/bimg.v1 v1.0.19/go.mod h1:PgsZL7dLwUbsGm1NYps320GxGgvQNTnecMCZqxV11So=
 gopkg.in/h2non/filetype.v0 v0.1.0 h1:dHAr5+j6pXvVGAUzPEcakSwUk4iN6wYK3ayaczI9/a0=
 gopkg.in/h2non/filetype.v0 v0.1.0/go.mod h1:x+TuV875+zjvYsL9AQ4XywX3gJhuFVfzIGWtOk7OBS4=
 gopkg.in/h2non/filetype.v1 v1.0.3 h1:EhZ9p3H8eDdFHiKljxJ59EeQ9Pu88wrgY7/B1WRK/VE=
