@@ -17,7 +17,7 @@ import (
 	"github.com/alicebob/miniredis"
 	"github.com/kumparan/cacher"
 
-	"gopkg.in/h2non/bimg.v1"
+	"github.com/kumparan/bimg"
 )
 
 func TestIndex(t *testing.T) {

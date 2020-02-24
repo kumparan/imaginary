@@ -549,9 +549,12 @@ Image measures are always in pixels, unless otherwise indicated.
 - **noprofile**   `bool`  - Disable adding ICC profile metadata. Defaults to `false`
 - **stripmeta**   `bool`  - Remove original image metadata, such as EXIF metadata. Defaults to `false`
 - **text**        `string` - Watermark text content. Example: `copyright (c) 2189`
+- **text_x**      `string` - Watermark text x position. Example: `10`
+- **text_y**      `string` - Watermark text y position. Example: `10`
 - **font**        `string` - Watermark text font type and format. Example: `sans bold 12`
 - **color**       `string` - Watermark text RGB decimal base color. Example: `255,200,150`
 - **image**       `string` - Watermark image URL pointing to the remote HTTP server.
+- **imagewidth**  `int`    - Watermark image width. Example: `100`
 - **type**        `string` - Specify the image format to output. Possible values are: `jpeg`, `png`, `webp` and `auto`. `auto` will use the preferred format requested by the client in the HTTP Accept header. A client can provide multiple comma-separated choices in `Accept` with the best being the one picked.
 - **gravity**     `string` - Define the crop operation gravity. Supported values are: `north`, `south`, `centre`, `west`, `east` and `smart`. Defaults to `centre`.
 - **file**        `string` - Use image from server local file path. In order to use this you must pass the `-mount=<dir>` flag.

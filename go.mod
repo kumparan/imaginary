@@ -7,6 +7,7 @@ require (
 	github.com/aws/aws-sdk-go v1.25.40
 	github.com/go-redsync/redsync v1.1.1
 	github.com/gomodule/redigo v2.0.0+incompatible
+	github.com/kumparan/bimg v1.0.19-0.20200224065147-4a5793633ba7
 	github.com/kumparan/cacher v1.7.0
 	github.com/rs/cors v0.0.0-20170727213201-7af7a1e09ba3
 	github.com/sirupsen/logrus v1.4.0
@@ -16,7 +17,6 @@ require (
 	golang.org/x/crypto v0.0.0-20190701094942-4def268fd1a4 // indirect
 	golang.org/x/net v0.0.0-20190607181551-461777fb6f67 // indirect
 	golang.org/x/sys v0.0.0-20190813064441-fde4db37ae7a // indirect
-	gopkg.in/h2non/bimg.v1 v1.0.19
 	gopkg.in/h2non/filetype.v0 v0.1.0
 	gopkg.in/h2non/filetype.v1 v1.0.3 // indirect
 	gopkg.in/throttled/throttled.v2 v2.0.3

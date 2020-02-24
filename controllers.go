@@ -14,7 +14,7 @@ import (
 	"github.com/kumparan/imaginary/config"
 	log "github.com/sirupsen/logrus"
 
-	"gopkg.in/h2non/bimg.v1"
+	"github.com/kumparan/bimg"
 	"gopkg.in/h2non/filetype.v0"
 )
 

@@ -4,7 +4,7 @@ import (
 	"strconv"
 	"strings"
 
-	"gopkg.in/h2non/bimg.v1"
+	"github.com/kumparan/bimg"
 )
 
 // ImageOptions represent all the supported image transformation params as first level members
@@ -37,7 +37,10 @@ type ImageOptions struct {
 	Sigma         float64
 	MinAmpl       float64
 	Text          string
+	TextX         int
+	TextY         int
 	Image         string
+	ImageWidth    int
 	Font          string
 	Type          string
 	AspectRatio   string

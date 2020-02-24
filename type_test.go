@@ -3,7 +3,7 @@ package main
 import (
 	"testing"
 
-	"gopkg.in/h2non/bimg.v1"
+	"github.com/kumparan/bimg"
 )
 
 func TestExtractImageTypeFromMime(t *testing.T) {

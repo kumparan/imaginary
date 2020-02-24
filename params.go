@@ -9,7 +9,7 @@ import (
 	"strconv"
 	"strings"
 
-	"gopkg.in/h2non/bimg.v1"
+	"github.com/kumparan/bimg"
 )
 
 var ErrUnsupportedValue = errors.New("unsupported value")
@@ -42,7 +42,10 @@ var paramTypeCoercions = map[string]Coercion{
 	"embed":       coerceEmbed,
 	"stripmeta":   coerceStripMeta,
 	"text":        coerceText,
+	"text_x":      coerceTextX,
+	"text_y":      coerceTextY,
 	"image":       coerceImage,
+	"imagewidth":  coerceImageWidth,
 	"font":        coerceFont,
 	"type":        coerceImageType,
 	"color":       coerceColor,
@@ -249,8 +252,23 @@ func coerceText(io *ImageOptions, param interface{}) (err error) {
 	return err
 }
 
+func coerceTextX(io *ImageOptions, param interface{}) (err error) {
+	io.TextX, err = coerceTypeInt(param)
+	return err
+}
+
+func coerceTextY(io *ImageOptions, param interface{}) (err error) {
+	io.TextY, err = coerceTypeInt(param)
+	return err
+}
+
 func coerceImage(io *ImageOptions, param interface{}) (err error) {
 	io.Image, err = coerceTypeString(param)
+	return err
+}
+
+func coerceImageWidth(io *ImageOptions, param interface{}) (err error) {
+	io.ImageWidth, err = coerceTypeInt(param)
 	return err
 }
 

@@ -8,10 +8,17 @@ import (
 	"io/ioutil"
 	"math"
 	"net/http"
+	"strconv"
+	"strings"
+
+	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/service/s3"
+	"github.com/kumparan/imaginary/config"
+	"github.com/kumparan/imaginary/db"
 
 	log "github.com/sirupsen/logrus"
 
-	"gopkg.in/h2non/bimg.v1"
+	"github.com/kumparan/bimg"
 )
 
 // OperationsMap defines the allowed image transformation operations listed by name.
@@ -99,7 +106,57 @@ func Resize(buf []byte, o ImageOptions) (Image, error) {
 		opts.Crop = !o.NoCrop
 	}
 
-	return Process(buf, opts)
+	if o.Image != "" {
+		responseWatermarkImage, err := db.S3Client.GetObject(&s3.GetObjectInput{
+			Bucket: aws.String(config.AWSS3Bucket()),
+			Key:    aws.String(o.Image),
+		})
+
+		if err != nil {
+			return Image{}, NewError(fmt.Sprintf("Unable to retrieve watermark image. %s", o.Image), BadRequest)
+		}
+
+		defer func() {
+			_ = responseWatermarkImage.Body.Close()
+		}()
+
+		bodyReader := io.LimitReader(responseWatermarkImage.Body, 1e6)
+
+		watermarkImageBuf, err := ioutil.ReadAll(bodyReader)
+		if len(watermarkImageBuf) == 0 {
+			return Image{}, NewError(fmt.Sprintf("Unable to read watermark image. %s", err.Error()), BadRequest)
+		}
+
+		if o.ImageWidth != 0 {
+			resizedWatermarkImage, err := Process(watermarkImageBuf, BimgOptions(ImageOptions{Width: o.ImageWidth}))
+			if err != nil {
+				return Image{}, NewError(fmt.Sprintf("Unable to transform watermark image. %s", err.Error()), BadRequest)
+			}
+			watermarkImageBuf = resizedWatermarkImage.Body
+		}
+
+		metaWatermarkImage, err := bimg.Metadata(watermarkImageBuf)
+		if err != nil {
+			log.WithFields(log.Fields{
+				"option": o}).
+				Error(err)
+		}
+
+		opts.WatermarkImage.Left = o.Left
+		opts.WatermarkImage.Top = o.Height - metaWatermarkImage.Size.Height
+		opts.WatermarkImage.Buf = watermarkImageBuf
+		opts.WatermarkImage.Opacity = o.Opacity
+	}
+
+	resImage, err := Process(buf, opts)
+
+	if o.Text != "" {
+		o.NoReplicate = true
+		return WatermarkWithPosition(resImage.Body, o)
+	}
+
+	return resImage, err
+
 }
 
 func Manipulate(buf []byte, o ImageOptions) (Image, error) {
@@ -316,6 +373,42 @@ func Watermark(buf []byte, o ImageOptions) (Image, error) {
 	opts.Watermark.Width = o.TextWidth
 	opts.Watermark.Opacity = o.Opacity
 	opts.Watermark.NoReplicate = o.NoReplicate
+
+	if len(o.Color) > 2 {
+		opts.Watermark.Background = bimg.Color{R: o.Color[0], G: o.Color[1], B: o.Color[2]}
+	}
+
+	return Process(buf, opts)
+}
+
+func WatermarkWithPosition(buf []byte, o ImageOptions) (Image, error) {
+	if o.Text == "" {
+		return Image{}, NewError("Missing required param: text", BadRequest)
+	}
+
+	metaImage, err := bimg.Metadata(buf)
+	if err != nil {
+		log.WithFields(log.Fields{
+			"option": o}).
+			Error(err)
+	}
+	opts := BimgOptions(o)
+	opts.Watermark.DPI = o.DPI
+	opts.Watermark.Text = o.Text
+	opts.Watermark.Font = o.Font
+	opts.Watermark.Margin = o.Margin
+	opts.Watermark.Width = metaImage.Size.Width
+	opts.Watermark.Opacity = o.Opacity
+	opts.Watermark.NoReplicate = o.NoReplicate
+	opts.Watermark.Top = metaImage.Size.Height - (o.TextY)
+	opts.Watermark.Left = o.TextX
+
+	fontArray := strings.Split(o.Font, " ")
+	if len(fontArray) <= 1 {
+		return Image{}, NewError(fmt.Sprintf("Invalid font input format, ex : sans 10"), BadRequest)
+	}
+	fontSize, err := strconv.Atoi(fontArray[1])
+	opts.Watermark.Top = metaImage.Size.Height - (o.TextY + fontSize)
 
 	if len(o.Color) > 2 {
 		opts.Watermark.Background = bimg.Color{R: o.Color[0], G: o.Color[1], B: o.Color[2]}
