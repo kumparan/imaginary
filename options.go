@@ -4,7 +4,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/fajrifernanda/bimg"
+	"github.com/kumparan/bimg"
 )
 
 // ImageOptions represent all the supported image transformation params as first level members

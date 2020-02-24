@@ -17,7 +17,7 @@ import (
 	"github.com/alicebob/miniredis"
 	"github.com/kumparan/cacher"
 
-	"github.com/fajrifernanda/bimg"
+	"github.com/kumparan/bimg"
 )
 
 func TestIndex(t *testing.T) {

@@ -40,12 +40,6 @@ github.com/dgryski/go-sip13 v0.0.0-20181026042036-e10d5fee7954/go.mod h1:vAd38F8
 github.com/eapache/go-resiliency v1.1.0/go.mod h1:kFI+JgMyC7bLPUVY133qvEBtVayf5mFgVsvEsIPBvNs=
 github.com/eapache/go-xerial-snappy v0.0.0-20180814174437-776d5712da21/go.mod h1:+020luEh2TKB4/GOp8oxxtq0Daoen/Cii55CzbTV6DU=
 github.com/eapache/queue v1.1.0/go.mod h1:6eCeP0CKFpHLu8blIFXhExK/dRa7WDZfr6jVFPTqq+I=
-github.com/fajrifernanda/bimg v1.0.20-0.20200219101858-bc80acb2cac1 h1:QBLPeezLXSgvEAbYbr8eeC9zFUdIdflkjtXIBMkQ2zk=
-github.com/fajrifernanda/bimg v1.0.20-0.20200219101858-bc80acb2cac1/go.mod h1:sW8RH5mUUhIIjPhvaysH4dYLr9C2BGoOfrbtDSp8uqY=
-github.com/fajrifernanda/bimg v1.0.20-0.20200220092408-90626b794d21 h1:Iqt2uYxPplfWo7kgdFdIHYL8+gpRp19eXpYy0o3yVIM=
-github.com/fajrifernanda/bimg v1.0.20-0.20200220092408-90626b794d21/go.mod h1:sW8RH5mUUhIIjPhvaysH4dYLr9C2BGoOfrbtDSp8uqY=
-github.com/fajrifernanda/bimg v1.0.20-0.20200220092743-a5733ca9e523 h1:sTk3qw6Qius12jQz3EU8kT2GKpIOLkqKssb9R+VQUgs=
-github.com/fajrifernanda/bimg v1.0.20-0.20200220092743-a5733ca9e523/go.mod h1:sW8RH5mUUhIIjPhvaysH4dYLr9C2BGoOfrbtDSp8uqY=
 github.com/fatih/color v1.7.0/go.mod h1:Zm6kSWBoL9eyXnKyktHP6abPY2pDugNf5KwzbycvMj4=
 github.com/fsnotify/fsnotify v1.4.7 h1:IXs+QLmnXW2CcXuY+8Mzv/fWEsPGWxqefPtCP5CnV9I=
 github.com/fsnotify/fsnotify v1.4.7/go.mod h1:jwhsz4b93w/PPRr/qN1Yymfu8t87LnFCMoQvtojpjFo=
@@ -112,6 +106,8 @@ github.com/kr/pretty v0.1.0/go.mod h1:dAy3ld7l9f0ibDNOQOHHMYYIIbhfbHSm3C4ZsoJORN
 github.com/kr/pty v1.1.1/go.mod h1:pFQYn66WHrOpPYNljwOMqo10TkYh1fy3cYio2l3bCsQ=
 github.com/kr/text v0.1.0 h1:45sCR5RtlFHMR4UwH9sdQ5TC8v0qDQCHnXt+kaKSTVE=
 github.com/kr/text v0.1.0/go.mod h1:4Jbv+DJW3UT/LiOwJeYQe1efqtUx/iVham/4vfdArNI=
+github.com/kumparan/bimg v1.0.19-0.20200224065147-4a5793633ba7 h1:sIXPs2iRfrI40UGVTyJHzPQg2QUOrT8aIM3YS83xixs=
+github.com/kumparan/bimg v1.0.19-0.20200224065147-4a5793633ba7/go.mod h1:MY4LnCpux/hUnM588U0TRH6QXtQmoc12xDTRkCn2al8=
 github.com/kumparan/cacher v1.7.0 h1:EK4QVog6ABtmhGhBcLQi+BhOSx2CpCAew/wcHHi1Duo=
 github.com/kumparan/cacher v1.7.0/go.mod h1:ILcZFnDLjsl9hm2Vp7sjE8RfY9rBz3IghDrxf+usfHI=
 github.com/kumparan/go-lib v1.0.0 h1:DrMvpjy+l4n5iSX1I7xeUpM7wauk9AiA6lXBJWYNJU4=

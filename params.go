@@ -9,7 +9,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/fajrifernanda/bimg"
+	"github.com/kumparan/bimg"
 )
 
 var ErrUnsupportedValue = errors.New("unsupported value")

@@ -19,7 +19,7 @@ import (
 
 	"github.com/kumparan/imaginary/db"
 
-	bimg "github.com/fajrifernanda/bimg"
+	bimg "github.com/kumparan/bimg"
 )
 
 var (

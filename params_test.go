@@ -5,7 +5,7 @@ import (
 	"net/url"
 	"testing"
 
-	"github.com/fajrifernanda/bimg"
+	"github.com/kumparan/bimg"
 )
 
 const epsilon = 0.0001

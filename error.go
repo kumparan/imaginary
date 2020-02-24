@@ -6,7 +6,7 @@ import (
 	"net/http"
 	"strings"
 
-	bimg "github.com/fajrifernanda/bimg"
+	bimg "github.com/kumparan/bimg"
 )
 
 const (
