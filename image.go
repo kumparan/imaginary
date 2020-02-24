@@ -400,15 +400,15 @@ func WatermarkWithPosition(buf []byte, o ImageOptions) (Image, error) {
 	opts.Watermark.Width = metaImage.Size.Width
 	opts.Watermark.Opacity = o.Opacity
 	opts.Watermark.NoReplicate = o.NoReplicate
-	opts.Watermark.Top = metaImage.Size.Height - (o.TextX)
-	opts.Watermark.Left = o.TextY
+	opts.Watermark.Top = metaImage.Size.Height - (o.TextY)
+	opts.Watermark.Left = o.TextX
 
 	fontArray := strings.Split(o.Font, " ")
 	if len(fontArray) <= 1 {
 		return Image{}, NewError(fmt.Sprintf("Invalid font input format, ex : sans 10"), BadRequest)
 	}
 	fontSize, err := strconv.Atoi(fontArray[1])
-	opts.Watermark.Top = metaImage.Size.Height - (o.TextX + fontSize)
+	opts.Watermark.Top = metaImage.Size.Height - (o.TextY + fontSize)
 
 	if len(o.Color) > 2 {
 		opts.Watermark.Background = bimg.Color{R: o.Color[0], G: o.Color[1], B: o.Color[2]}
