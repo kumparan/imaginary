@@ -103,8 +103,8 @@ github.com/kr/pretty v0.1.0/go.mod h1:dAy3ld7l9f0ibDNOQOHHMYYIIbhfbHSm3C4ZsoJORN
 github.com/kr/pty v1.1.1/go.mod h1:pFQYn66WHrOpPYNljwOMqo10TkYh1fy3cYio2l3bCsQ=
 github.com/kr/text v0.1.0 h1:45sCR5RtlFHMR4UwH9sdQ5TC8v0qDQCHnXt+kaKSTVE=
 github.com/kr/text v0.1.0/go.mod h1:4Jbv+DJW3UT/LiOwJeYQe1efqtUx/iVham/4vfdArNI=
-github.com/kumparan/bimg v1.0.19-0.20200314080243-5080c4bf314b h1:MUHhWXK5fiRSTaTrgQH1aS12FyI+tZwL94ekTzDBppM=
-github.com/kumparan/bimg v1.0.19-0.20200314080243-5080c4bf314b/go.mod h1:MY4LnCpux/hUnM588U0TRH6QXtQmoc12xDTRkCn2al8=
+github.com/kumparan/bimg v1.0.19-0.20200314082653-a2786caec2bf h1:TQitUaRRsMFN2Cn1XZb7kULLiyAWyY/gZoaTQ9xwIyk=
+github.com/kumparan/bimg v1.0.19-0.20200314082653-a2786caec2bf/go.mod h1:MY4LnCpux/hUnM588U0TRH6QXtQmoc12xDTRkCn2al8=
 github.com/kumparan/cacher v1.7.0 h1:EK4QVog6ABtmhGhBcLQi+BhOSx2CpCAew/wcHHi1Duo=
 github.com/kumparan/cacher v1.7.0/go.mod h1:ILcZFnDLjsl9hm2Vp7sjE8RfY9rBz3IghDrxf+usfHI=
 github.com/kumparan/go-lib v1.0.0/go.mod h1:HcO/9dlk4k+SKxDQsJb83XIaofg0jxVt0nlotPFVVq8=
