@@ -1,4 +1,6 @@
 env: "development"
+sentry_dsn: "$sentry_dsn"
+log_level: "debug"
 redis:
     cache_host: "$dev_redis_host_imaginary_service"
     lock_host: "$dev_redis_lock_host_imaginary_service"

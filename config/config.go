@@ -75,3 +75,13 @@ func AWSS3Key() string {
 func AWSS3Secret() string {
 	return viper.GetString("aws.s3_secret")
 }
+
+// SentryDSN :nodoc:
+func SentryDSN() string {
+	return viper.GetString("sentry_dsn")
+}
+
+// LogLevel :nodoc:
+func LogLevel() string {
+	return viper.GetString("log_level")
+}

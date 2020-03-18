@@ -1,4 +1,6 @@
 env: "staging"
+sentry_dsn: "$sentry_dsn"
+log_level: "info"
 redis:
     cache_host: "$staging_redis_host_imaginary_service"
     lock_host: "$staging_redis_lock_host_imaginary_service"

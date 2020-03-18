@@ -4,7 +4,6 @@ import (
 	"flag"
 	"fmt"
 	"io/ioutil"
-	"log"
 	"net/url"
 	"os"
 	"runtime"
@@ -19,7 +18,10 @@ import (
 
 	"github.com/kumparan/imaginary/db"
 
+	logrusRuntime "github.com/banzaicloud/logrus-runtime-formatter"
+	"github.com/evalphobia/logrus_sentry"
 	bimg "github.com/kumparan/bimg"
+	log "github.com/sirupsen/logrus"
 )
 
 var (
@@ -132,6 +134,7 @@ func main() {
 	urlSignature := getURLSignature(*aURLSignatureKey)
 
 	config.GetConf()
+	setupLogger()
 	//Initialize S3 Client
 	db.InitializeS3Conn()
 	cacheKeeper := cacher.NewKeeper()
@@ -357,4 +360,47 @@ func debug(msg string, values ...interface{}) {
 	if debug == "imaginary" || debug == "*" {
 		log.Printf(msg, values...)
 	}
+}
+
+func setupLogger() {
+	formatter := logrusRuntime.Formatter{
+		ChildFormatter: &log.JSONFormatter{},
+		Line:           true,
+		File:           true,
+	}
+
+	if config.Env() == "development" {
+		formatter = logrusRuntime.Formatter{
+			ChildFormatter: &log.TextFormatter{
+				ForceColors:   true,
+				FullTimestamp: true,
+			},
+			Line: true,
+			File: true,
+		}
+	}
+
+	log.SetFormatter(&formatter)
+	log.SetOutput(os.Stdout)
+
+	logLevel, err := log.ParseLevel(config.LogLevel())
+	if err != nil {
+		logLevel = log.DebugLevel
+	}
+	log.SetLevel(logLevel)
+
+	hook, err := logrus_sentry.NewSentryHook(config.SentryDSN(), []log.Level{
+		log.PanicLevel,
+		log.FatalLevel,
+		log.ErrorLevel,
+	})
+	if err != nil {
+		log.Info("Logger configured to use only local stdout")
+		return
+	}
+
+	hook.SetEnvironment(config.Env())
+	hook.Timeout = 0
+	hook.StacktraceConfiguration.Enable = true
+	log.AddHook(hook)
 }
