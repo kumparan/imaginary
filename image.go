@@ -178,14 +178,12 @@ func Manipulate(buf []byte, o ImageOptions) (Image, error) {
 		return Resize(buf, o)
 	}
 
-	//manipulating without width, height, aspecratio input
 	opts := BimgOptions(o)
-	opts.Embed = true
-
 	if o.IsDefinedField.NoCrop {
 		opts.Crop = !o.NoCrop
 	}
 
+	//manipulating without width, height, aspecratio input
 	return Process(buf, opts)
 }
 
@@ -574,12 +572,11 @@ func handleGIFResizing(buf []byte, opts bimg.Options) (out Image, err error) {
 	ops := lilliput.NewImageOps(10000)
 	defer ops.Close()
 
-	// create a buffer to store the output image, 50MB in this case
+	// create a buffer to store the output image, 20MB in this case
 	outputImg := make([]byte, 20*1024*1024)
 
 	resizeMethod := lilliput.ImageOpsNoResize
 	if opts.Crop {
-		fmt.Println("crop", opts.Crop)
 		resizeMethod = lilliput.ImageOpsFit
 	}
 
