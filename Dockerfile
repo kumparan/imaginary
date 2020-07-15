@@ -8,6 +8,11 @@ WORKDIR ${GOPATH}/src/github.com/kumparan/imaginary
 COPY . .
 
 # Cache go modules
+RUN clang --version
+
+RUN gcc --version
+
+
 ENV GO111MODULE=on
 
 COPY go.mod .
