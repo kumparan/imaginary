@@ -6,7 +6,7 @@ build:
 	CGO_CFLAGS_ALLOW=-Xpreprocessor go test && go build -o bin/imaginary
 
 test:
-	go test
+	CGO_CFLAGS_ALLOW=-Xpreprocessor go test
 
 install:
 	go get -u .
