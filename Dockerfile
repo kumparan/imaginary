@@ -8,7 +8,7 @@ WORKDIR ${GOPATH}/src/github.com/kumparan/imaginary
 COPY . .
 
 # Cache go modules
-RUN pkg-config --version
+RUN ldconfig -p | grep libjpeg
 
 ENV GO111MODULE=on
 
