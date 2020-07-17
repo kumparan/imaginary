@@ -1,4 +1,4 @@
-FROM 475170104714.dkr.ecr.ap-southeast-1.amazonaws.com/imaginary-service:builder-vips8.8.4-libjpeg9 as builder
+FROM 475170104714.dkr.ecr.ap-southeast-1.amazonaws.com/imaginary-service:builder-ubuntu-vips8.8.4-libjpeg8 as builder
 
 ARG IMAGINARY_VERSION="dev"
 
@@ -18,7 +18,7 @@ RUN go mod download
 # Compile imaginary
 RUN CGO_CFLAGS_ALLOW=-Xpreprocessor go test && go build -o ${GOPATH}/bin/imaginary
 
-FROM 475170104714.dkr.ecr.ap-southeast-1.amazonaws.com/imaginary-service:base-bullseye
+FROM 475170104714.dkr.ecr.ap-southeast-1.amazonaws.com/imaginary-service:base-ubuntu-libjpeg-turbo-8-dev
 
 ARG SPINNAKER_ID="dev"
 
