@@ -2,6 +2,8 @@ FROM 475170104714.dkr.ecr.ap-southeast-1.amazonaws.com/imaginary-service:builder
 
 ARG IMAGINARY_VERSION="dev"
 
+RUN export GOPATH=/tmp/go
+
 WORKDIR ${GOPATH}/src/github.com/kumparan/imaginary
 
 # Copy imaginary sources
