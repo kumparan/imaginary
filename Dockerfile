@@ -14,8 +14,11 @@ ENV GO111MODULE=on
 
 COPY go.mod .
 COPY go.sum .
+COPY deps.sh .
 
 RUN go mod download
+
+RUN deps.sh
 
 # Compile imaginary
 RUN CGO_CFLAGS_ALLOW=-Xpreprocessor go test && go build -o ${GOPATH}/bin/imaginary
