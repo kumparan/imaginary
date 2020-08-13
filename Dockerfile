@@ -8,7 +8,7 @@ WORKDIR ${GOPATH}/src/github.com/kumparan/imaginary
 COPY . .
 
 # Making sure all dependencies are up-to-date
-RUN rm -rf vendor && dep init && dep ensure
+RUN go mod download
 
 # Compile imaginary
 RUN CGO_CFLAGS_ALLOW=-Xpreprocessor go test && go build -o ${GOPATH}/bin/imaginary

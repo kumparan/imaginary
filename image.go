@@ -517,6 +517,10 @@ func Process(buf []byte, opts bimg.Options) (out Image, err error) {
 		}
 	}()
 
+	if opts.Type == bimg.GIF || (bimg.DetermineImageType(buf) == bimg.GIF && opts.Type == bimg.UNKNOWN) {
+		return ProcessGIF(buf, opts)
+	}
+
 	buf, err = bimg.Resize(buf, opts)
 	if err != nil {
 		return Image{}, err
