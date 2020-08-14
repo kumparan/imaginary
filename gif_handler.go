@@ -41,23 +41,13 @@ func transformGIFFrame(m image.Image, opts bimg.Options) image.Image {
 	// Parse crop and resize parameters before applying any transforms.
 	// This is to ensure that any percentage-based values are based off the
 	// size of the original image.
-	rect := m.Bounds()
 	w, h, resize := resizeGIFParams(m, opts)
-
-	// crop if needed
-	if !m.Bounds().Eq(rect) {
-		m = imaging.Crop(m, rect)
-	}
 	// resize if needed
 	if resize {
-		if !opts.Crop {
-			m = imaging.Fit(m, w, h, resampleFilter)
+		if w == 0 || h == 0 {
+			m = imaging.Resize(m, w, h, resampleFilter)
 		} else {
-			if w == 0 || h == 0 {
-				m = imaging.Resize(m, w, h, resampleFilter)
-			} else {
-				m = imaging.Thumbnail(m, w, h, resampleFilter)
-			}
+			m = imaging.Thumbnail(m, w, h, resampleFilter)
 		}
 	}
 
@@ -72,10 +62,12 @@ func transformGIFFrame(m image.Image, opts bimg.Options) image.Image {
 		m = imaging.Rotate270(m)
 	}
 
-	// flip
+	// flip vertical
 	if opts.Flip {
 		m = imaging.FlipV(m)
 	}
+
+	// flip horizontal
 	if opts.Flop {
 		m = imaging.FlipH(m)
 	}
@@ -93,6 +85,14 @@ func resizeGIFParams(m image.Image, opts bimg.Options) (w, h int, resize bool) {
 	// if requested width and height match the original, skip resizing
 	if (w == imgW || w == 0) && (h == imgH || h == 0) {
 		return 0, 0, false
+	}
+
+	if opts.Crop && w == 0 { // if crop = true and w is 0, then set w with source image width
+		w = imgW
+	}
+
+	if opts.Crop && h == 0 { // if crop = true and h is 0, then set h with source image height
+		h = imgH
 	}
 
 	return w, h, true
