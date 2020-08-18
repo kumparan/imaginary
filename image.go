@@ -100,7 +100,6 @@ func Resize(buf []byte, o ImageOptions) (Image, error) {
 	}
 
 	opts := BimgOptions(o)
-	opts.Embed = true
 
 	if o.IsDefinedField.NoCrop {
 		opts.Crop = !o.NoCrop
