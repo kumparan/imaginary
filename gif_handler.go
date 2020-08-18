@@ -44,11 +44,7 @@ func transformGIFFrame(m image.Image, opts bimg.Options) image.Image {
 	w, h, resize := resizeGIFParams(m, opts)
 	// resize if needed
 	if resize {
-		if w == 0 || h == 0 {
-			m = imaging.Resize(m, w, h, resampleFilter)
-		} else {
-			m = imaging.Thumbnail(m, w, h, resampleFilter)
-		}
+		m = imaging.Resize(m, w, h, resampleFilter)
 	}
 
 	// rotate
