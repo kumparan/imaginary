@@ -100,7 +100,9 @@ func Resize(buf []byte, o ImageOptions) (Image, error) {
 	}
 
 	opts := BimgOptions(o)
-	opts.Embed = true
+	if !o.NoCrop {
+		opts.Embed = true
+	}
 
 	if o.IsDefinedField.NoCrop {
 		opts.Crop = !o.NoCrop
@@ -516,6 +518,10 @@ func Process(buf []byte, opts bimg.Options) (out Image, err error) {
 			out = Image{}
 		}
 	}()
+
+	if opts.Type == bimg.GIF || (bimg.DetermineImageType(buf) == bimg.GIF && opts.Type == bimg.UNKNOWN) {
+		return ProcessGIF(buf, opts)
+	}
 
 	buf, err = bimg.Resize(buf, opts)
 	if err != nil {
