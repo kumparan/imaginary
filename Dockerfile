@@ -25,3 +25,10 @@ LABEL maintainer="aryo.kusumo@kumparan.com" \
 
 COPY --from=builder /go/bin/imaginary /usr/local/bin/imaginary
 COPY --from=builder /go/src/github.com/kumparan/imaginary/config.yml.* /usr/local/bin/
+
+RUN apt update -y
+CD /usr/share/fonts
+MKDIR googlefonts
+CD googlefonts
+aws s3 cp s3://yw-assets/heebo/Heebo-VariableFont_wght.ttf Heebo-VariableFont_wght.ttf  
+chmod -R --reference=/usr/share/fonts/opentype /usr/share/fonts/googlefonts
