@@ -25,3 +25,4 @@ LABEL maintainer="aryo.kusumo@kumparan.com" \
 
 COPY --from=builder /go/bin/imaginary /usr/local/bin/imaginary
 COPY --from=builder /go/src/github.com/kumparan/imaginary/config.yml.* /usr/local/bin/
+RUN wget https://yw-assets.s3-ap-southeast-1.amazonaws.com/Heebo/Heebo-VariableFont_wght.ttf -P /usr/share/fonts/googlefonts
