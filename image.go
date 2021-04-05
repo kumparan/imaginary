@@ -95,6 +95,8 @@ func Info(buf []byte, o ImageOptions) (Image, error) {
 }
 
 func Resize(buf []byte, o ImageOptions) (Image, error) {
+	logger := log.WithFields(log.Fields{
+		"option": o})
 	if o.Width == 0 && o.Height == 0 {
 		return Image{}, NewError("Missing required param: height or width", BadRequest)
 	}
@@ -108,53 +110,27 @@ func Resize(buf []byte, o ImageOptions) (Image, error) {
 		opts.Crop = !o.NoCrop
 	}
 
-	if o.Image != "" {
-		responseWatermarkImage, err := db.S3Client.GetObject(&s3.GetObjectInput{
-			Bucket: aws.String(config.AWSS3Bucket()),
-			Key:    aws.String(o.Image),
-		})
-
-		if err != nil {
-			return Image{}, NewError(fmt.Sprintf("Unable to retrieve watermark image. %s", o.Image), BadRequest)
-		}
-
-		defer func() {
-			_ = responseWatermarkImage.Body.Close()
-		}()
-
-		bodyReader := io.LimitReader(responseWatermarkImage.Body, 1e6)
-
-		watermarkImageBuf, err := ioutil.ReadAll(bodyReader)
-		if len(watermarkImageBuf) == 0 {
-			return Image{}, NewError(fmt.Sprintf("Unable to read watermark image. %s", err.Error()), BadRequest)
-		}
-
-		if o.ImageWidth != 0 {
-			resizedWatermarkImage, err := Process(watermarkImageBuf, BimgOptions(ImageOptions{Width: o.ImageWidth}))
-			if err != nil {
-				return Image{}, NewError(fmt.Sprintf("Unable to transform watermark image. %s", err.Error()), BadRequest)
-			}
-			watermarkImageBuf = resizedWatermarkImage.Body
-		}
-
-		metaWatermarkImage, err := bimg.Metadata(watermarkImageBuf)
-		if err != nil {
-			log.WithFields(log.Fields{
-				"option": o}).
-				Error(err)
-		}
-
-		opts.WatermarkImage.Left = o.Left
-		opts.WatermarkImage.Top = o.Height - metaWatermarkImage.Size.Height
-		opts.WatermarkImage.Buf = watermarkImageBuf
-		opts.WatermarkImage.Opacity = o.Opacity
+	resImage, err := Process(buf, opts)
+	if err != nil {
+		logger.Error(err)
+		return resImage, err
 	}
 
-	resImage, err := Process(buf, opts)
+	if o.Image != "" {
+		resImage, err = WatermarkImageFromS3(resImage.Body, o)
+		if err != nil {
+			logger.Error(err)
+			return Image{}, err
+		}
+	}
 
 	if o.Text != "" {
 		o.NoReplicate = true
-		return WatermarkWithPosition(resImage.Body, o)
+		resImage, err = WatermarkWithPosition(resImage.Body, o)
+		if err != nil {
+			logger.Error(err)
+			return Image{}, err
+		}
 	}
 
 	return resImage, err
@@ -415,6 +391,50 @@ func WatermarkWithPosition(buf []byte, o ImageOptions) (Image, error) {
 	if len(o.Color) > 2 {
 		opts.Watermark.Background = bimg.Color{R: o.Color[0], G: o.Color[1], B: o.Color[2]}
 	}
+
+	return Process(buf, opts)
+}
+
+func WatermarkImageFromS3(buf []byte, o ImageOptions) (Image, error) {
+	responseWatermarkImage, err := db.S3Client.GetObject(&s3.GetObjectInput{
+		Bucket: aws.String(config.AWSS3Bucket()),
+		Key:    aws.String(o.Image),
+	})
+
+	if err != nil {
+		return Image{}, NewError(fmt.Sprintf("Unable to retrieve watermark image. %s", o.Image), BadRequest)
+	}
+
+	defer func() {
+		_ = responseWatermarkImage.Body.Close()
+	}()
+
+	bodyReader := io.LimitReader(responseWatermarkImage.Body, 1e6)
+
+	watermarkImageBuf, err := ioutil.ReadAll(bodyReader)
+	if len(watermarkImageBuf) == 0 {
+		return Image{}, NewError(fmt.Sprintf("Unable to read watermark image. %s", err.Error()), BadRequest)
+	}
+
+	if o.ImageWidth != 0 {
+		resizedWatermarkImage, err := Process(watermarkImageBuf, BimgOptions(ImageOptions{Width: o.ImageWidth}))
+		if err != nil {
+			return Image{}, NewError(fmt.Sprintf("Unable to transform watermark image. %s", err.Error()), BadRequest)
+		}
+		watermarkImageBuf = resizedWatermarkImage.Body
+	}
+
+	metaWatermarkImage, err := bimg.Metadata(watermarkImageBuf)
+	if err != nil {
+		log.WithFields(log.Fields{
+			"option": o}).
+			Error(err)
+	}
+	opts := BimgOptions(o)
+	opts.WatermarkImage.Left = o.Left
+	opts.WatermarkImage.Top = o.Height - metaWatermarkImage.Size.Height
+	opts.WatermarkImage.Buf = watermarkImageBuf
+	opts.WatermarkImage.Opacity = o.Opacity
 
 	return Process(buf, opts)
 }
