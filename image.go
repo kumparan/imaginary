@@ -360,6 +360,8 @@ func Watermark(buf []byte, o ImageOptions) (Image, error) {
 }
 
 func WatermarkWithPosition(buf []byte, o ImageOptions) (Image, error) {
+	o.Sigma = 0
+
 	if o.Text == "" {
 		return Image{}, NewError("Missing required param: text", BadRequest)
 	}
@@ -396,6 +398,8 @@ func WatermarkWithPosition(buf []byte, o ImageOptions) (Image, error) {
 }
 
 func WatermarkImageFromS3(buf []byte, o ImageOptions) (Image, error) {
+	o.Sigma = 0
+
 	responseWatermarkImage, err := db.S3Client.GetObject(&s3.GetObjectInput{
 		Bucket: aws.String(config.AWSS3Bucket()),
 		Key:    aws.String(o.Image),

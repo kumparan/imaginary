@@ -329,6 +329,12 @@ func coerceExtend(io *ImageOptions, param interface{}) error {
 
 func coerceSigma(io *ImageOptions, param interface{}) (err error) {
 	io.Sigma, err = coerceTypeFloat(param)
+
+	if io.Sigma > 20 {
+		// normalize sigma if bigger than 20
+		io.Sigma = io.Sigma / 100
+	}
+
 	return err
 }
 
