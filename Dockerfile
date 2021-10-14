@@ -27,4 +27,4 @@ COPY --from=builder /go/bin/imaginary /usr/local/bin/imaginary
 COPY --from=builder /go/src/github.com/kumparan/imaginary/config.yml.* /usr/local/bin/
 
 RUN apt-get update && apt-get install wget -y
-RUN mv Heebo-VariableFont_wght.ttf /usr/share/fonts/googlefonts/
+COPY --from=builder /go/src/github.com/kumparan/imaginary/Heebo-*.ttf /usr/share/fonts/googlefonts/
