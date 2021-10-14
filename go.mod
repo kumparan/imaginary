@@ -12,7 +12,7 @@ require (
 	github.com/getsentry/raven-go v0.2.0 // indirect
 	github.com/go-redsync/redsync v1.1.1
 	github.com/gomodule/redigo v2.0.0+incompatible
-	github.com/kumparan/bimg v1.0.19-0.20200224065147-4a5793633ba7
+	github.com/kumparan/bimg v1.0.19-0.20200314082653-a2786caec2bf
 	github.com/kumparan/cacher v1.7.0
 	github.com/rs/cors v0.0.0-20170727213201-7af7a1e09ba3
 	github.com/sirupsen/logrus v1.4.0
