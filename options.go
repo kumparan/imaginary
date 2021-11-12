@@ -51,6 +51,7 @@ type ImageOptions struct {
 	Gravity       bimg.Gravity
 	Colorspace    bimg.Interpretation
 	Operations    PipelineOperations
+	Enlarge       bool
 }
 
 // IsDefinedField holds boolean ImageOptions fields. If true it means the field was specified in the request. This
@@ -66,6 +67,7 @@ type IsDefinedField struct {
 	NoProfile     bool
 	StripMetadata bool
 	Interlace     bool
+	Enlarge       bool
 }
 
 // PipelineOperation represents the structure for an operation field.
@@ -150,6 +152,7 @@ func BimgOptions(o ImageOptions) bimg.Options {
 		Type:           ImageType(o.Type),
 		Rotate:         bimg.Angle(o.Rotate),
 		Interlace:      o.Interlace,
+		Enlarge:        o.Enlarge,
 	}
 
 	if len(o.Background) != 0 {
