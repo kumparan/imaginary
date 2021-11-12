@@ -58,6 +58,7 @@ var paramTypeCoercions = map[string]Coercion{
 	"operations":  coerceOperations,
 	"interlace":   coerceInterlace,
 	"aspectratio": coerceAspectRatio,
+	"enlarge":     coerceEnlarge,
 }
 
 func coerceTypeInt(param interface{}) (int, error) {
@@ -364,6 +365,12 @@ func coerceInterlace(io *ImageOptions, param interface{}) (err error) {
 
 func coerceAspectRatio(io *ImageOptions, param interface{}) (err error) {
 	io.AspectRatio, err = coerceTypeString(param)
+	return err
+}
+
+func coerceEnlarge(io *ImageOptions, param interface{}) (err error) {
+	io.Enlarge, err = coerceTypeBool(param)
+	io.IsDefinedField.Enlarge = true
 	return err
 }
 

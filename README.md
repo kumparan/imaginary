@@ -568,7 +568,8 @@ Image measures are always in pixels, unless otherwise indicated.
 - **operations**  `json`   - Pipeline of image operation transformations defined as URL safe encoded JSON array. See [pipeline](#get--post-pipeline) endpoints for more details.
 - **sign**        `string` - URL signature (URL-safe Base64-encoded HMAC digest)
 - **interlace**   `bool`   - Use progressive / interlaced format of the image output. Defaults to `false`
-- **aspectratio** `string` - Apply aspect ratio by giving either image's height or width. Exampe: `16:9`
+- **aspectratio** `string` - Apply aspect ratio by giving either image's height or width. Example: `16:9`
+- **enlarge**     `bool`   - Enlarge the image Example: `false`
 
 #### GET /
 Content-Type: `application/json`
