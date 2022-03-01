@@ -85,3 +85,8 @@ func SentryDSN() string {
 func LogLevel() string {
 	return viper.GetString("log_level")
 }
+
+// PlaceholderBase64 :nodoc:
+func PlaceholderBase64() string {
+	return viper.GetString("placeholder_base64")
+}

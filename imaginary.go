@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/base64"
 	"flag"
 	"fmt"
 	"io/ioutil"
@@ -219,6 +220,17 @@ func main() {
 	} else if *aEnablePlaceholder {
 		// Expose default placeholder
 		opts.PlaceholderImage = placeholder
+
+		// use configurable placeholder if available
+		if len(config.PlaceholderBase64()) > 0 {
+			var placeholderByte, err = ioutil.ReadAll(base64.NewDecoder(base64.StdEncoding, strings.NewReader(config.PlaceholderBase64())))
+			switch {
+			case err != nil:
+				log.Error(err)
+			case placeholderByte != nil:
+				opts.PlaceholderImage = placeholderByte
+			}
+		}
 	}
 
 	// Check URL signature key, if required
