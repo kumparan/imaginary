@@ -104,6 +104,16 @@ func replyWithPlaceholder(req *http.Request, w http.ResponseWriter, errCaller Er
 		return err
 	}
 
+	aspectRatio := req.URL.Query().Get("aspectratio")
+	if shouldTransformByAspectRatio(bimgOptions.Height, bimgOptions.Width) && aspectRatio != "" {
+		params := make(map[string]interface{})
+		params["height"] = bimgOptions.Height
+		params["width"] = bimgOptions.Width
+		params["aspectratio"] = parseAspectRatio(aspectRatio)
+
+		bimgOptions.Width, bimgOptions.Height = transformByAspectRatio(params)
+	}
+
 	// Resize placeholder to expected output
 	buf, err := bimg.Resize(o.PlaceholderImage, bimgOptions)
 	if err != nil {

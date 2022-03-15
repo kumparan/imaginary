@@ -10,3 +10,4 @@ aws:
     s3_secret: "$media_s3_secret"
     s3_bucket: "$prod_media_s3_bucket"
 cache_ttl: 10000
+placeholder_base64: ""
