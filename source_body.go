@@ -24,6 +24,8 @@ func (s *BodyImageSource) Matches(r *http.Request) bool {
 }
 
 func (s *BodyImageSource) GetImage(r *http.Request) ([]byte, error) {
+	// TODO: Handle get image from base64 string
+
 	if isFormBody(r) {
 		return readFormBody(r)
 	}
