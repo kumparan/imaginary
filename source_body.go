@@ -80,7 +80,12 @@ func readJSONBody(r *http.Request) ([]byte, error) {
 	}
 
 	if jsonField.Base64 != "" {
-		return base64.StdEncoding.DecodeString(jsonField.Base64)
+		base64Str := jsonField.Base64
+		base64Split := strings.Split(jsonField.Base64, "base64,")
+		if len(base64Split) > 1 {
+			base64Str = base64Split[1]
+		}
+		return base64.StdEncoding.DecodeString(base64Str)
 	}
 
 	return nil, ErrEmptyBody
