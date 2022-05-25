@@ -18,6 +18,11 @@ import (
 	"gopkg.in/h2non/filetype.v0"
 )
 
+const (
+	_clientAPIKeyName  = "client-api-key"
+	_clientAPIKeyValue = "unXgVz7svAaZepCzrcJqYbpbGTEX6e"
+)
+
 func indexController(w http.ResponseWriter, r *http.Request) {
 	if r.URL.Path != "/" {
 		ErrorReply(r, w, ErrNotFound, ServerOptions{})
@@ -42,6 +47,16 @@ func healthController(w http.ResponseWriter, r *http.Request) {
 
 func imageController(o ServerOptions, operation Operation) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, req *http.Request) {
+		apiKey := req.Header.Get(_clientAPIKeyName)
+		if apiKey == "" {
+			ErrorReply(req, w, NewError("API-Key is not provided", Unauthorized), o)
+			return
+		}
+		if apiKey != _clientAPIKeyValue {
+			ErrorReply(req, w, NewError("API-Key is invalid", Unauthorized), o)
+			return
+		}
+
 		var image = Image{}
 		byteFromCache, mu := findFromCacheByID(o, imaginaryResponseCacheKey(req.RequestURI))
 		defer func() {
