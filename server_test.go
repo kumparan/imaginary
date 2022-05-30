@@ -293,13 +293,7 @@ func TestRemoteHTTPSource(t *testing.T) {
 	url := ts.URL + "?width=200&height=200&url=" + tsImage.URL
 	defer ts.Close()
 
-	req, err := http.NewRequest(http.MethodGet, url, nil)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	var client = &http.Client{}
-	res, err := client.Do(req)
+	res, err := http.Get(url)
 	if err != nil {
 		t.Fatal("Cannot perform the request")
 	}
@@ -339,13 +333,7 @@ func TestInvalidRemoteHTTPSource(t *testing.T) {
 	url := ts.URL + "?width=200&height=200&url=" + tsImage.URL
 	defer ts.Close()
 
-	req, err := http.NewRequest(http.MethodGet, url, nil)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	var client = &http.Client{}
-	res, err := client.Do(req)
+	res, err := http.Get(url)
 	if err != nil {
 		t.Fatal("Request failed")
 	}
@@ -363,13 +351,7 @@ func TestMountDirectory(t *testing.T) {
 	url := ts.URL + "?width=200&height=200&file=large.jpg"
 	defer ts.Close()
 
-	req, err := http.NewRequest(http.MethodGet, url, nil)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	var client = &http.Client{}
-	res, err := client.Do(req)
+	res, err := http.Get(url)
 	if err != nil {
 		t.Fatal("Cannot perform the request")
 	}
@@ -401,13 +383,7 @@ func TestMountInvalidDirectory(t *testing.T) {
 	url := ts.URL + "?top=100&left=100&areawidth=200&areaheight=120&file=large.jpg"
 	defer ts.Close()
 
-	req, err := http.NewRequest(http.MethodGet, url, nil)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	var client = &http.Client{}
-	res, err := client.Do(req)
+	res, err := http.Get(url)
 	if err != nil {
 		t.Fatal("Cannot perform the request")
 	}
@@ -423,13 +399,7 @@ func TestMountInvalidPath(t *testing.T) {
 	url := ts.URL + "?top=100&left=100&areawidth=200&areaheight=120&file=../../large.jpg"
 	defer ts.Close()
 
-	req, err := http.NewRequest(http.MethodGet, url, nil)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	var client = &http.Client{}
-	res, err := client.Do(req)
+	res, err := http.Get(url)
 	if err != nil {
 		t.Fatal("Cannot perform the request")
 	}
