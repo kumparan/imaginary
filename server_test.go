@@ -297,7 +297,6 @@ func TestRemoteHTTPSource(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	req.Header.Set(_clientAPIKeyName, _clientAPIKeyValue)
 
 	var client = &http.Client{}
 	res, err := client.Do(req)
@@ -344,7 +343,6 @@ func TestInvalidRemoteHTTPSource(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	req.Header.Set(_clientAPIKeyName, _clientAPIKeyValue)
 
 	var client = &http.Client{}
 	res, err := client.Do(req)
@@ -369,7 +367,6 @@ func TestMountDirectory(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	req.Header.Set(_clientAPIKeyName, _clientAPIKeyValue)
 
 	var client = &http.Client{}
 	res, err := client.Do(req)
@@ -408,7 +405,6 @@ func TestMountInvalidDirectory(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	req.Header.Set(_clientAPIKeyName, _clientAPIKeyValue)
 
 	var client = &http.Client{}
 	res, err := client.Do(req)
@@ -431,7 +427,6 @@ func TestMountInvalidPath(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	req.Header.Set(_clientAPIKeyName, _clientAPIKeyValue)
 
 	var client = &http.Client{}
 	res, err := client.Do(req)
