@@ -54,16 +54,16 @@ func imageController(o ServerOptions, operation Operation) func(http.ResponseWri
 				ErrorReply(req, w, NewError("Error reading body request to generate requestID, "+err.Error(), BadRequest), o)
 				return
 			}
-			h := sha1.New()
-			h.Write(data)
-			requestID = hex.EncodeToString(h.Sum(nil))
-			// Reset body request
+			hash := sha1.New()
+			hash.Write(data)
+			requestID = hex.EncodeToString(hash.Sum(nil))
+			// Restore body request (prevent nil value)
 			req.Body = ioutil.NopCloser(bytes.NewBuffer(data))
 		}
 
-		k := fmt.Sprintf("%s%s", req.RequestURI, requestID)
+		uniqueKey := fmt.Sprintf("%s%s", req.RequestURI, requestID)
 		var image = Image{}
-		byteFromCache, mu := findFromCacheByID(o, imaginaryResponseCacheKey(k))
+		byteFromCache, mu := findFromCacheByID(o, imaginaryResponseCacheKey(uniqueKey))
 		defer func() {
 			if mu != nil {
 				mu.Unlock()
