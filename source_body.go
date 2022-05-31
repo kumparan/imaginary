@@ -30,10 +30,6 @@ func (s *BodyImageSource) GetImage(r *http.Request) ([]byte, error) {
 		return readFormBody(r)
 	}
 
-	if isJSONBody(r) {
-		return readJSONBody(r)
-	}
-
 	return readRawBody(r)
 }
 
@@ -65,17 +61,13 @@ func isJSONBody(r *http.Request) bool {
 	return strings.HasPrefix(r.Header.Get("Content-Type"), "application/json")
 }
 
-func readJSONBody(r *http.Request) ([]byte, error) {
+func readJSONBodyData(data []byte) ([]byte, error) {
 	type supportedJSONField struct {
 		Base64 string `json:"base64"`
 	}
 
 	jsonField := new(supportedJSONField)
-	data, err := ioutil.ReadAll(r.Body)
-	if err != nil {
-		return nil, err
-	}
-	if err = json.Unmarshal(data, jsonField); err != nil {
+	if err := json.Unmarshal(data, jsonField); err != nil {
 		return nil, err
 	}
 

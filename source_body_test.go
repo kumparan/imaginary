@@ -62,7 +62,12 @@ func TestBodyImageSource_JSON_base64(t *testing.T) {
 			t.Fatal("Cannot match the request")
 		}
 
-		body, err = source.GetImage(r)
+		reqBodyData, err := ioutil.ReadAll(r.Body)
+		if err != nil {
+			t.Fatalf("Error reading body request: %s", err)
+		}
+
+		body, err = readJSONBodyData(reqBodyData)
 		if err != nil {
 			t.Fatalf("Error while reading the body: %s", err)
 		}
@@ -100,7 +105,12 @@ func TestBodyImageSource_JSON_base64WithDataURLs(t *testing.T) {
 			t.Fatal("Cannot match the request")
 		}
 
-		body, err = source.GetImage(r)
+		reqBodyData, err := ioutil.ReadAll(r.Body)
+		if err != nil {
+			t.Fatalf("Error reading body request: %s", err)
+		}
+
+		body, err = readJSONBodyData(reqBodyData)
 		if err != nil {
 			t.Fatalf("Error while reading the body: %s", err)
 		}

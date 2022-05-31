@@ -1,7 +1,6 @@
 package main
 
 import (
-	"bytes"
 	"crypto/sha1"
 	"encoding/hex"
 	"encoding/json"
@@ -46,19 +45,21 @@ func healthController(w http.ResponseWriter, r *http.Request) {
 
 func imageController(o ServerOptions, operation Operation) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, req *http.Request) {
-		// requestID is a hashing body request to be used by cache key
-		var requestID string
+		var (
+			// requestID is a hashing body request to be used by cache key
+			requestID   string
+			reqBodyData []byte
+			err         error
+		)
 		if isJSONBody(req) {
-			data, err := ioutil.ReadAll(req.Body)
+			reqBodyData, err = ioutil.ReadAll(req.Body)
 			if err != nil {
-				ErrorReply(req, w, NewError("Error reading body request to generate requestID, "+err.Error(), BadRequest), o)
+				ErrorReply(req, w, NewError("Error reading body request, "+err.Error(), BadRequest), o)
 				return
 			}
 			hash := sha1.New()
-			hash.Write(data)
+			hash.Write(reqBodyData)
 			requestID = hex.EncodeToString(hash.Sum(nil))
-			// Restore body request (prevent nil value)
-			req.Body = ioutil.NopCloser(bytes.NewBuffer(data))
 		}
 
 		uniqueKey := fmt.Sprintf("%s%s", req.RequestURI, requestID)
@@ -103,7 +104,12 @@ func imageController(o ServerOptions, operation Operation) func(http.ResponseWri
 			return
 		}
 
-		buf, err := imageSource.GetImage(req)
+		var buf []byte
+		if len(reqBodyData) > 0 {
+			buf, err = readJSONBodyData(reqBodyData)
+		} else {
+			buf, err = imageSource.GetImage(req)
+		}
 		if err != nil {
 			ErrorReply(req, w, NewError(err.Error(), BadRequest), o)
 			return
