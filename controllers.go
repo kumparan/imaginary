@@ -128,7 +128,7 @@ func imageController(o ServerOptions, operation Operation) func(http.ResponseWri
 		}
 
 		if req != nil && len(resImage.Body) > 0 {
-			err = o.Cacher.Store(mu, cacher.NewItemWithCustomTTL(imaginaryResponseCacheKey(req.RequestURI), resImage.Body, config.CacheTTL()))
+			err = o.Cacher.Store(mu, cacher.NewItemWithCustomTTL(imaginaryResponseCacheKey(uniqueKey), resImage.Body, config.CacheTTL()))
 			if err != nil {
 				log.WithFields(log.Fields{
 					"request": req.RequestURI}).
