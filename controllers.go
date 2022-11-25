@@ -11,7 +11,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/go-redsync/redsync"
+	"github.com/kumparan/redsync/v4"
 
 	"github.com/kumparan/cacher"
 	"github.com/kumparan/imaginary/config"
@@ -65,11 +65,7 @@ func imageController(o ServerOptions, operation Operation) func(http.ResponseWri
 		uniqueKey := fmt.Sprintf("%s%s", req.RequestURI, requestID)
 		var image = Image{}
 		byteFromCache, mu := findFromCacheByID(o, imaginaryResponseCacheKey(uniqueKey))
-		defer func() {
-			if mu != nil {
-				mu.Unlock()
-			}
-		}()
+		defer cacher.SafeUnlock(mu)
 
 		if len(byteFromCache) > 0 {
 			image.Body = byteFromCache
@@ -265,7 +261,6 @@ func findFromCacheByID(o ServerOptions, key string) (res []byte, mu *redsync.Mut
 
 	res = reply.([]byte)
 	return
-
 }
 
 func imaginaryResponseCacheKey(req string) string {
