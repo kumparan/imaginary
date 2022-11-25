@@ -11,7 +11,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/go-redsync/redsync"
+	"github.com/kumparan/redsync/v4"
 
 	"github.com/kumparan/cacher"
 	"github.com/kumparan/imaginary/config"
