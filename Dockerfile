@@ -1,3 +1,4 @@
+# TODO: update the image, vips should be 8.12.2
 FROM 475170104714.dkr.ecr.ap-southeast-1.amazonaws.com/imaginary-service:builder-vips8.8.4-go-118 as builder
 
 ARG IMAGINARY_VERSION="dev"
@@ -17,7 +18,7 @@ FROM 475170104714.dkr.ecr.ap-southeast-1.amazonaws.com/imaginary-service:base-bu
 
 ARG SPINNAKER_ID="dev"
 
-LABEL maintainer="aryo.kusumo@kumparan.com" \
+LABEL maintainer="backend@kumparan.com" \
       org.label-schema.description="kumparan imaginary" \
       org.label-schema.schema-version="1.0" \
       org.label-schema.url="https://github.com/kumparan/imaginary" \

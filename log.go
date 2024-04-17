@@ -25,7 +25,7 @@ type LogRecord struct {
 func (r *LogRecord) Log(out io.Writer) {
 	timeFormat := r.time.Format("02/Jan/2006 15:04:05")
 	request := fmt.Sprintf("%s %s %s", r.method, r.uri, r.protocol)
-	fmt.Fprintf(out, formatPattern, r.ip, timeFormat, request, r.status, r.responseBytes, r.elapsedTime.Seconds())
+	_, _ = fmt.Fprintf(out, formatPattern, r.ip, timeFormat, request, r.status, r.responseBytes, r.elapsedTime.Seconds())
 }
 
 // Write acts like a proxy passing the given bytes buffer to the ResponseWritter
@@ -44,13 +44,14 @@ func (r *LogRecord) WriteHeader(status int) {
 
 // LogHandler maps the HTTP handler with a custom io.Writer compatible stream
 type LogHandler struct {
-	handler http.Handler
-	io      io.Writer
+	handler  http.Handler
+	io       io.Writer
+	logLevel string
 }
 
 // NewLog creates a new logger
-func NewLog(handler http.Handler, io io.Writer) http.Handler {
-	return &LogHandler{handler, io}
+func NewLog(handler http.Handler, io io.Writer, logLevel string) http.Handler {
+	return &LogHandler{handler, io, logLevel}
 }
 
 // Implements the required method as standard HTTP handler, serving the request.
@@ -78,5 +79,16 @@ func (h *LogHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	record.time = finishTime.UTC()
 	record.elapsedTime = finishTime.Sub(startTime)
 
-	record.Log(h.io)
+	switch h.logLevel {
+	case "error":
+		if record.status >= http.StatusInternalServerError {
+			record.Log(h.io)
+		}
+	case "warning":
+		if record.status >= http.StatusBadRequest {
+			record.Log(h.io)
+		}
+	case "info":
+		record.Log(h.io)
+	}
 }

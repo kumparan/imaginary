@@ -8,6 +8,7 @@ import (
 	"io/ioutil"
 	"mime"
 	"net/http"
+	"path"
 	"strconv"
 	"strings"
 
@@ -17,23 +18,25 @@ import (
 	"github.com/kumparan/imaginary/config"
 	log "github.com/sirupsen/logrus"
 
+	"github.com/h2non/filetype"
 	"github.com/kumparan/bimg"
-	"gopkg.in/h2non/filetype.v0"
 )
 
-func indexController(w http.ResponseWriter, r *http.Request) {
-	if r.URL.Path != "/" {
-		ErrorReply(r, w, ErrNotFound, ServerOptions{})
-		return
-	}
+func indexController(o ServerOptions) func(w http.ResponseWriter, r *http.Request) {
+	return func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path != path.Join(o.PathPrefix, "/") {
+			ErrorReply(r, w, ErrNotFound, ServerOptions{})
+			return
+		}
 
-	body, _ := json.Marshal(Versions{
-		Version,
-		bimg.Version,
-		bimg.VipsVersion,
-	})
-	w.Header().Set("Content-Type", "application/json")
-	_, _ = w.Write(body)
+		body, _ := json.Marshal(Versions{
+			Version,
+			bimg.Version,
+			bimg.VipsVersion,
+		})
+		w.Header().Set("Content-Type", "application/json")
+		_, _ = w.Write(body)
+	}
 }
 
 func healthController(w http.ResponseWriter, r *http.Request) {
@@ -54,7 +57,7 @@ func imageController(o ServerOptions, operation Operation) func(http.ResponseWri
 		if isJSONBody(req) {
 			reqBodyData, err = ioutil.ReadAll(req.Body)
 			if err != nil {
-				ErrorReply(req, w, NewError("Error reading body request, "+err.Error(), BadRequest), o)
+				ErrorReply(req, w, NewError("Error reading body request, "+err.Error(), http.StatusBadRequest), o)
 				return
 			}
 			hash := sha1.New()
@@ -71,7 +74,7 @@ func imageController(o ServerOptions, operation Operation) func(http.ResponseWri
 			image.Body = byteFromCache
 			opts, err := buildParamsFromQuery(req.URL.Query())
 			if err != nil {
-				ErrorReply(req, w, NewError("Error while processing parameters, "+err.Error(), BadRequest), o)
+				ErrorReply(req, w, NewError("Error while processing parameters, "+err.Error(), http.StatusBadRequest), o)
 				return
 			}
 
@@ -107,7 +110,11 @@ func imageController(o ServerOptions, operation Operation) func(http.ResponseWri
 			buf, err = imageSource.GetImage(req)
 		}
 		if err != nil {
-			ErrorReply(req, w, NewError(err.Error(), BadRequest), o)
+			if xerr, ok := err.(Error); ok {
+				ErrorReply(req, w, xerr, o)
+			} else {
+				ErrorReply(req, w, NewError(err.Error(), http.StatusBadRequest), o)
+			}
 			return
 		}
 
@@ -177,7 +184,7 @@ func imageHandler(w http.ResponseWriter, r *http.Request, buf []byte, operation 
 
 	opts, err := buildParamsFromQuery(r.URL.Query())
 	if err != nil {
-		ErrorReply(r, w, NewError("Error while processing parameters, "+err.Error(), BadRequest), o)
+		ErrorReply(r, w, NewError("Error while processing parameters, "+err.Error(), http.StatusBadRequest), o)
 		return
 	}
 
@@ -190,15 +197,41 @@ func imageHandler(w http.ResponseWriter, r *http.Request, buf []byte, operation 
 		return
 	}
 
+	sizeInfo, err := bimg.Size(buf)
+
+	if err != nil {
+		ErrorReply(r, w, NewError("Error while processing the image: "+err.Error(), http.StatusBadRequest), o)
+		return
+	}
+
+	// https://en.wikipedia.org/wiki/Image_resolution#Pixel_count
+	imgResolution := float64(sizeInfo.Width) * float64(sizeInfo.Height)
+
+	if (imgResolution / 1000000) > o.MaxAllowedPixels {
+		ErrorReply(r, w, ErrResolutionTooBig, o)
+		return
+	}
+
 	image, err := operation.Run(buf, opts)
 	if err != nil {
-		ErrorReply(r, w, NewError("Error while processing the image: "+err.Error(), BadRequest), o)
+		// Ensure the Vary header is set when an error occurs
+		if vary != "" {
+			w.Header().Set("Vary", vary)
+		}
+		ErrorReply(r, w, NewError("Error while processing the image: "+err.Error(), http.StatusBadRequest), o)
 		return
 	}
 
 	// Expose Content-Length response header
 	w.Header().Set("Content-Length", strconv.Itoa(len(image.Body)))
 	w.Header().Set("Content-Type", image.Mime)
+	if image.Mime != "application/json" && o.ReturnSize {
+		meta, err := bimg.Metadata(image.Body)
+		if err == nil {
+			w.Header().Set("Image-Width", strconv.Itoa(meta.Size.Width))
+			w.Header().Set("Image-Height", strconv.Itoa(meta.Size.Height))
+		}
+	}
 	if vary != "" {
 		w.Header().Set("Vary", vary)
 	}
@@ -207,46 +240,49 @@ func imageHandler(w http.ResponseWriter, r *http.Request, buf []byte, operation 
 	return
 }
 
-func formController(w http.ResponseWriter, r *http.Request) {
-	operations := []struct {
-		name   string
-		method string
-		args   string
-	}{
-		{"Resize", "resize", "width=300&height=200&type=jpeg"},
-		{"Force resize", "resize", "width=300&height=200&force=true"},
-		{"Crop", "crop", "width=300&quality=95"},
-		{"SmartCrop", "crop", "width=300&height=260&quality=95&gravity=smart"},
-		{"Extract", "extract", "top=100&left=100&areawidth=300&areaheight=150"},
-		{"Enlarge", "enlarge", "width=1440&height=900&quality=95"},
-		{"Rotate", "rotate", "rotate=180"},
-		{"Flip", "flip", ""},
-		{"Flop", "flop", ""},
-		{"Thumbnail", "thumbnail", "width=100"},
-		{"Zoom", "zoom", "factor=2&areawidth=300&top=80&left=80"},
-		{"Color space (black&white)", "resize", "width=400&height=300&colorspace=bw"},
-		{"Add watermark", "watermark", "textwidth=100&text=Hello&font=sans%2012&opacity=0.5&color=255,200,50"},
-		{"Convert format", "convert", "type=png"},
-		{"Image metadata", "info", ""},
-		{"Gaussian blur", "blur", "sigma=15.0&minampl=0.2"},
-		{"Pipeline (image reduction via multiple transformations)", "pipeline", "operations=%5B%7B%22operation%22:%20%22crop%22,%20%22params%22:%20%7B%22width%22:%20300,%20%22height%22:%20260%7D%7D,%20%7B%22operation%22:%20%22convert%22,%20%22params%22:%20%7B%22type%22:%20%22webp%22%7D%7D%5D"},
+func formController(o ServerOptions) func(w http.ResponseWriter, r *http.Request) {
+	return func(w http.ResponseWriter, r *http.Request) {
+		operations := []struct {
+			name   string
+			method string
+			args   string
+		}{
+			{"Resize", "resize", "width=300&height=200&type=jpeg"},
+			{"Force resize", "resize", "width=300&height=200&force=true"},
+			{"Crop", "crop", "width=300&quality=95"},
+			{"SmartCrop", "crop", "width=300&height=260&quality=95&gravity=smart"},
+			{"Extract", "extract", "top=100&left=100&areawidth=300&areaheight=150"},
+			{"Enlarge", "enlarge", "width=1440&height=900&quality=95"},
+			{"Rotate", "rotate", "rotate=180"},
+			{"AutoRotate", "autorotate", "quality=90"},
+			{"Flip", "flip", ""},
+			{"Flop", "flop", ""},
+			{"Thumbnail", "thumbnail", "width=100"},
+			{"Zoom", "zoom", "factor=2&areawidth=300&top=80&left=80"},
+			{"Color space (black&white)", "resize", "width=400&height=300&colorspace=bw"},
+			{"Add watermark", "watermark", "textwidth=100&text=Hello&font=sans%2012&opacity=0.5&color=255,200,50"},
+			{"Convert format", "convert", "type=png"},
+			{"Image metadata", "info", ""},
+			{"Gaussian blur", "blur", "sigma=15.0&minampl=0.2"},
+			{"Pipeline (image reduction via multiple transformations)", "pipeline", "operations=%5B%7B%22operation%22:%20%22crop%22,%20%22params%22:%20%7B%22width%22:%20300,%20%22height%22:%20260%7D%7D,%20%7B%22operation%22:%20%22convert%22,%20%22params%22:%20%7B%22type%22:%20%22webp%22%7D%7D%5D"},
+		}
+
+		html := "<html><body>"
+
+		for _, form := range operations {
+			html += fmt.Sprintf(`
+		<h1>%s</h1>
+		<form method="POST" action="%s?%s" enctype="multipart/form-data">
+		<input type="file" name="file" />
+		<input type="submit" value="Upload" />
+		</form>`, path.Join(o.PathPrefix, form.name), path.Join(o.PathPrefix, form.method), form.args)
+		}
+
+		html += "</body></html>"
+
+		w.Header().Set("Content-Type", "text/html")
+		_, _ = w.Write([]byte(html))
 	}
-
-	html := "<html><body>"
-
-	for _, form := range operations {
-		html += fmt.Sprintf(`
-    <h1>%s</h1>
-    <form method="POST" action="/%s?%s" enctype="multipart/form-data">
-      <input type="file" name="file" />
-      <input type="submit" value="Upload" />
-    </form>`, form.name, form.method, form.args)
-	}
-
-	html += "</body></html>"
-
-	w.Header().Set("Content-Type", "text/html")
-	_, _ = w.Write([]byte(html))
 }
 
 func findFromCacheByID(o ServerOptions, key string) (res []byte, mu *redsync.Mutex) {

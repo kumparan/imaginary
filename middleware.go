@@ -5,14 +5,14 @@ import (
 	"crypto/sha256"
 	"encoding/base64"
 	"fmt"
+	"github.com/throttled/throttled/v2"
 	"net/http"
 	"strings"
 	"time"
 
 	"github.com/kumparan/bimg"
 	"github.com/rs/cors"
-	"gopkg.in/throttled/throttled.v2"
-	"gopkg.in/throttled/throttled.v2/store/memstore"
+	"github.com/throttled/throttled/v2/store/memstore"
 )
 
 func Middleware(fn func(http.ResponseWriter, *http.Request), o ServerOptions) http.Handler {
@@ -105,7 +105,7 @@ func validateImage(next http.Handler, o ServerOptions) http.Handler {
 		}
 
 		if r.Method == http.MethodGet && o.Mount == "" && !o.EnableURLSource {
-			ErrorReply(r, w, ErrMethodNotAllowed, o)
+			ErrorReply(r, w, ErrGetMethodNotAllowed, o)
 			return
 		}
 
@@ -172,8 +172,8 @@ func validateURLSignature(next http.Handler, o ServerOptions) http.Handler {
 
 		// Compute expected URL signature
 		h := hmac.New(sha256.New, []byte(o.URLSignatureKey))
-		h.Write([]byte(r.URL.Path))
-		h.Write([]byte(query.Encode()))
+		_, _ = h.Write([]byte(r.URL.Path))
+		_, _ = h.Write([]byte(query.Encode()))
 		expectedSign := h.Sum(nil)
 
 		urlSign, err := base64.RawURLEncoding.DecodeString(sign)

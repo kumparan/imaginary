@@ -11,7 +11,7 @@ import (
 func TestFileSystemImageSource(t *testing.T) {
 	var body []byte
 	var err error
-	const fixtureFile = "testdata/large.jpg"
+	const fixtureFile = "testdata/large image.jpg"
 
 	source := NewFileSystemImageSource(&SourceConfig{MountPath: "testdata"})
 	fakeHandler := func(w http.ResponseWriter, r *http.Request) {
@@ -23,11 +23,11 @@ func TestFileSystemImageSource(t *testing.T) {
 		if err != nil {
 			t.Fatalf("Error while reading the body: %s", err)
 		}
-		w.Write(body)
+		_, _ = w.Write(body)
 	}
 
 	file, _ := os.Open(fixtureFile)
-	r, _ := http.NewRequest(http.MethodGet, "http://foo/bar?file=large.jpg", file)
+	r, _ := http.NewRequest(http.MethodGet, "http://foo/bar?file=large%20image.jpg", file)
 	w := httptest.NewRecorder()
 	fakeHandler(w, r)
 
