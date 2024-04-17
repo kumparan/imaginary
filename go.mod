@@ -1,6 +1,6 @@
 module github.com/kumparan/imaginary
 
-go 1.18
+go 1.22
 
 require (
 	github.com/alicebob/miniredis v2.5.0+incompatible
@@ -9,7 +9,6 @@ require (
 	github.com/disintegration/imaging v1.6.2
 	github.com/evalphobia/logrus_sentry v0.8.2
 	github.com/gomodule/redigo v2.0.0+incompatible
-	github.com/h2non/bimg v1.1.9
 	github.com/h2non/filetype v1.1.3
 	github.com/kumparan/bimg v1.0.19
 	github.com/kumparan/cacher v1.17.0
@@ -70,3 +69,5 @@ require (
 // FIXME: replace this after dependencies got merged
 
 replace github.com/kumparan/bimg => github.com/kumparan/bimg v1.0.19-0.20240417035233-c3ef7cea8ac9
+
+//replace github.com/kumparan/bimg => github.com/h2non/bimg v1.1.9
