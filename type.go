@@ -39,6 +39,8 @@ func ImageType(name string) bimg.ImageType {
 		return bimg.PNG
 	case "webp":
 		return bimg.WEBP
+	case "avif":
+		return bimg.AVIF
 	case "tiff":
 		return bimg.TIFF
 	case "gif":
@@ -47,6 +49,8 @@ func ImageType(name string) bimg.ImageType {
 		return bimg.SVG
 	case "pdf":
 		return bimg.PDF
+	case "jxl":
+		return bimg.JXL
 	default:
 		return bimg.UNKNOWN
 	}
@@ -59,6 +63,8 @@ func GetImageMimeType(code bimg.ImageType) string {
 		return "image/png"
 	case bimg.WEBP:
 		return "image/webp"
+	case bimg.AVIF:
+		return "image/avif"
 	case bimg.TIFF:
 		return "image/tiff"
 	case bimg.GIF:
@@ -67,6 +73,8 @@ func GetImageMimeType(code bimg.ImageType) string {
 		return "image/svg+xml"
 	case bimg.PDF:
 		return "application/pdf"
+	case bimg.JXL:
+		return "image/jxl"
 	default:
 		return "image/jpeg"
 	}

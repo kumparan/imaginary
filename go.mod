@@ -1,6 +1,6 @@
 module github.com/kumparan/imaginary
 
-go 1.22
+go 1.22.1
 
 require (
 	github.com/alicebob/miniredis v2.5.0+incompatible
@@ -68,6 +68,6 @@ require (
 
 // FIXME: replace this after dependencies got merged
 
-replace github.com/kumparan/bimg => github.com/kumparan/bimg v1.0.19-0.20240417035233-c3ef7cea8ac9
+//replace github.com/kumparan/bimg => github.com/kumparan/bimg v1.1.10-0.20221026122401-82b196226a20
 
-//replace github.com/kumparan/bimg => github.com/h2non/bimg v1.1.9
+replace github.com/kumparan/bimg => ./../bimg
