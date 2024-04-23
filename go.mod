@@ -68,6 +68,4 @@ require (
 
 // FIXME: replace this after dependencies got merged
 
-//replace github.com/kumparan/bimg => github.com/kumparan/bimg v1.1.10-0.20221026122401-82b196226a20
-
-replace github.com/kumparan/bimg => ./../bimg
+replace github.com/kumparan/bimg => github.com/kumparan/bimg v1.0.19-0.20240423032023-42ac001d79b2
