@@ -1,5 +1,4 @@
-# TODO: update the image, go 1.22 and vips 8.15.2
-FROM 475170104714.dkr.ecr.ap-southeast-1.amazonaws.com/imaginary-service:builder-vips8.8.4-go-118 as builder
+FROM 475170104714.dkr.ecr.ap-southeast-1.amazonaws.com/imaginary-service:builder-vips-8.12.2-1.22.2 as builder
 
 ARG IMAGINARY_VERSION="dev"
 
