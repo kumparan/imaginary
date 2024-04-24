@@ -1,4 +1,4 @@
-# TODO: update the image, vips should be 8.12.2
+# TODO: update the image, vips should be 8.15.2
 FROM 475170104714.dkr.ecr.ap-southeast-1.amazonaws.com/imaginary-service:builder-vips8.8.4-go-118 as builder
 
 ARG IMAGINARY_VERSION="dev"
