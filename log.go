@@ -8,7 +8,7 @@ import (
 	"time"
 )
 
-const formatPattern = `{"ip": "%s", "timestamp": "%s", "request": "%s", "status": "%d", "response_byte_size": "%d", "elapsed": "%.4f"}\n`
+const formatPattern = `{"remote_ip": "%s", "time": "%s", "method": "%s", "uri": "%s", "protocol": "%s", "status": "%d", "bytes_out": "%d", "latency": "%d", "latency_human": "%dms"}%s`
 
 // LogRecord implements an Apache-compatible HTTP logging
 type LogRecord struct {
@@ -23,9 +23,9 @@ type LogRecord struct {
 
 // Log writes a log entry in the passed io.Writer stream
 func (r *LogRecord) Log(out io.Writer) {
-	timeFormat := r.time.Format("02/Jan/2006 15:04:05")
-	request := fmt.Sprintf("%s %s %s", r.method, r.uri, r.protocol)
-	_, _ = fmt.Fprintf(out, formatPattern, r.ip, timeFormat, request, r.status, r.responseBytes, r.elapsedTime.Seconds())
+	timeFormat := r.time.Format(time.RFC3339Nano)
+
+	_, _ = fmt.Fprintf(out, formatPattern, r.ip, timeFormat, r.method, r.uri, r.protocol, r.status, r.responseBytes, r.elapsedTime.Nanoseconds(), r.elapsedTime.Milliseconds(), "\n")
 }
 
 // Write acts like a proxy passing the given bytes buffer to the ResponseWritter
