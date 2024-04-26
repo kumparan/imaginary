@@ -8,7 +8,7 @@ import (
 	"time"
 )
 
-const formatPattern = "%s - - [%s] \"%s\" %d %d %.4f\n"
+const formatPattern = `{"ip": "%s", "timestamp": "%s", "request": "%s", "status": "%d", "response_byte_size": "%d", "elapsed": "%.4f"}\n`
 
 // LogRecord implements an Apache-compatible HTTP logging
 type LogRecord struct {
