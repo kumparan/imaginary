@@ -8,7 +8,7 @@ import (
 	"time"
 )
 
-const formatPattern = `{"remote_ip": "%s", "time": "%s", "method": "%s", "uri": "%s", "protocol": "%s", "status": "%d", "imaginary_bytes_out": %d, "imaginary_duration_in_ms": %d, "latency_human": "%dms"}%s`
+const formatPattern = `{"remote_ip": "%s", "time": "%s", "method": "%s", "uri": "%s", "protocol": "%s", "status": "%d", "imaginary_bytes_out": %d, "imaginary_duration_in_ms": %d, "latency_human": "%s"}%s`
 
 // LogRecord implements an Apache-compatible HTTP logging
 type LogRecord struct {
