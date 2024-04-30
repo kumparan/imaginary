@@ -6,41 +6,30 @@ import (
 	"net/http"
 	"strings"
 
-	bimg "github.com/kumparan/bimg"
-)
-
-const (
-	_ uint8 = iota
-	BadRequest
-	NotAllowed
-	Unsupported
-	Unauthorized
-	InternalError
-	NotFound
-	NotImplemented
-	Forbidden
-	NotAcceptable
+	"github.com/kumparan/bimg"
 )
 
 var (
-	ErrNotFound             = NewError("not found", NotFound)
-	ErrInvalidAPIKey        = NewError("invalid or missing API key", Unauthorized)
-	ErrMethodNotAllowed     = NewError("method not allowed", NotAllowed)
-	ErrUnsupportedMedia     = NewError("unsupported media type", Unsupported)
-	ErrOutputFormat         = NewError("unsupported output image format", BadRequest)
-	ErrEmptyBody            = NewError("empty image", BadRequest)
-	ErrMissingParamFile     = NewError("missing required param: file", BadRequest)
-	ErrInvalidFilePath      = NewError("invalid file path", BadRequest)
-	ErrInvalidImageURL      = NewError("invalid image URL", BadRequest)
-	ErrMissingImageSource   = NewError("cannot process the image due to missing or invalid params", BadRequest)
-	ErrNotImplemented       = NewError("not implemented endpoint", NotImplemented)
-	ErrInvalidURLSignature  = NewError("invalid URL signature", BadRequest)
-	ErrURLSignatureMismatch = NewError("URL signature mismatch", Forbidden)
+	ErrNotFound             = NewError("Not found", http.StatusNotFound)
+	ErrInvalidAPIKey        = NewError("Invalid or missing API key", http.StatusUnauthorized)
+	ErrMethodNotAllowed     = NewError("HTTP method not allowed. Try with a POST or GET method (-enable-url-source flag must be defined)", http.StatusMethodNotAllowed)
+	ErrGetMethodNotAllowed  = NewError("GET method not allowed. Make sure remote URL source is enabled by using the flag: -enable-url-source", http.StatusMethodNotAllowed)
+	ErrUnsupportedMedia     = NewError("Unsupported media type", http.StatusNotAcceptable)
+	ErrOutputFormat         = NewError("Unsupported output image format", http.StatusBadRequest)
+	ErrEmptyBody            = NewError("Empty or unreadable image", http.StatusBadRequest)
+	ErrMissingParamFile     = NewError("Missing required param: file", http.StatusBadRequest)
+	ErrInvalidFilePath      = NewError("Invalid file path", http.StatusBadRequest)
+	ErrInvalidImageURL      = NewError("Invalid image URL", http.StatusBadRequest)
+	ErrMissingImageSource   = NewError("Cannot process the image due to missing or invalid params", http.StatusBadRequest)
+	ErrNotImplemented       = NewError("Not implemented endpoint", http.StatusNotImplemented)
+	ErrInvalidURLSignature  = NewError("Invalid URL signature", http.StatusBadRequest)
+	ErrURLSignatureMismatch = NewError("URL signature mismatch", http.StatusForbidden)
+	ErrResolutionTooBig     = NewError("Image resolution is too big", http.StatusUnprocessableEntity)
 )
 
 type Error struct {
 	Message string `json:"message,omitempty"`
-	Code    uint8  `json:"code"`
+	Code    int    `json:"status"`
 }
 
 func (e Error) JSON() []byte {
@@ -53,34 +42,21 @@ func (e Error) Error() string {
 }
 
 func (e Error) HTTPCode() int {
-	var codes = map[uint8]int{
-		BadRequest:     http.StatusBadRequest,
-		NotAllowed:     http.StatusMethodNotAllowed,
-		Unsupported:    http.StatusUnsupportedMediaType,
-		InternalError:  http.StatusInternalServerError,
-		Unauthorized:   http.StatusUnauthorized,
-		NotFound:       http.StatusNotFound,
-		NotImplemented: http.StatusNotImplemented,
-		Forbidden:      http.StatusForbidden,
-		NotAcceptable:  http.StatusNotAcceptable,
+	if e.Code >= 400 && e.Code <= 511 {
+		return e.Code
 	}
-
-	if v, ok := codes[e.Code]; ok {
-		return v
-	}
-
 	return http.StatusServiceUnavailable
 }
 
-func NewError(err string, code uint8) Error {
+func NewError(err string, code int) Error {
 	err = strings.Replace(err, "\n", "", -1)
-	return Error{err, code}
+	return Error{Message: err, Code: code}
 }
 
-func sendErrorResponse(w http.ResponseWriter, httpStatusCode int, imaginaryErrorCode uint8, err error) {
+func sendErrorResponse(w http.ResponseWriter, httpStatusCode int, err error) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(httpStatusCode)
-	_, _ = w.Write([]byte(fmt.Sprintf("{\"error\":\"%s\", \"code\": %d}", err.Error(), imaginaryErrorCode)))
+	_, _ = w.Write([]byte(fmt.Sprintf("{\"error\":\"%s\", \"status\": %d}", err.Error(), httpStatusCode)))
 }
 
 func replyWithPlaceholder(req *http.Request, w http.ResponseWriter, errCaller Error, o ServerOptions) error {
@@ -94,13 +70,13 @@ func replyWithPlaceholder(req *http.Request, w http.ResponseWriter, errCaller Er
 
 	bimgOptions.Width, err = parseInt(req.URL.Query().Get("width"))
 	if err != nil {
-		sendErrorResponse(w, http.StatusBadRequest, BadRequest, err)
+		sendErrorResponse(w, http.StatusBadRequest, err)
 		return err
 	}
 
 	bimgOptions.Height, err = parseInt(req.URL.Query().Get("height"))
 	if err != nil {
-		sendErrorResponse(w, http.StatusBadRequest, BadRequest, err)
+		sendErrorResponse(w, http.StatusBadRequest, err)
 		return err
 	}
 
@@ -117,7 +93,7 @@ func replyWithPlaceholder(req *http.Request, w http.ResponseWriter, errCaller Er
 	// Resize placeholder to expected output
 	buf, err := bimg.Resize(o.PlaceholderImage, bimgOptions)
 	if err != nil {
-		sendErrorResponse(w, http.StatusBadRequest, BadRequest, err)
+		sendErrorResponse(w, http.StatusBadRequest, err)
 		return err
 	}
 
@@ -127,7 +103,11 @@ func replyWithPlaceholder(req *http.Request, w http.ResponseWriter, errCaller Er
 	// Placeholder image response
 	w.Header().Set("Content-Type", GetImageMimeType(bimg.DetermineImageType(image)))
 	w.Header().Set("Error", string(errCaller.JSON()))
-	w.WriteHeader(errCaller.HTTPCode())
+	if o.PlaceholderStatus != 0 {
+		w.WriteHeader(o.PlaceholderStatus)
+	} else {
+		w.WriteHeader(errCaller.HTTPCode())
+	}
 	_, _ = w.Write(image)
 
 	return errCaller

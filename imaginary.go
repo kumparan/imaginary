@@ -42,6 +42,7 @@ var (
 	aURLSignatureKey    = flag.String("url-signature-key", "", "The URL signature key (32 characters minimum)")
 	aAllowedOrigins     = flag.String("allowed-origins", "", "Restrict remote image source processing to certain origins (separated by commas). Note: Origins are validated against host *AND* path.")
 	aMaxAllowedSize     = flag.Int("max-allowed-size", 0, "Restrict maximum size of http image source (in bytes)")
+	aMaxAllowedPixels   = flag.Float64("max-allowed-resolution", 18.0, "Restrict maximum resolution of the image (in megapixels)")
 	aKey                = flag.String("key", "", "Define API key for authorization")
 	aMount              = flag.String("mount", "", "Mount server local directory")
 	aCertFile           = flag.String("certfile", "", "TLS certificate file path")
@@ -49,6 +50,7 @@ var (
 	aAuthorization      = flag.String("authorization", "", "Defines a constant Authorization header value passed to all the image source servers. -enable-url-source flag must be defined. This overwrites authorization headers forwarding behavior via X-Forward-Authorization")
 	aForwardHeaders     = flag.String("forward-headers", "", "Forwards custom headers to the image source server. -enable-url-source flag must be defined.")
 	aPlaceholder        = flag.String("placeholder", "", "Image path to image custom placeholder to be used in case of error. Recommended minimum image size is: 1200x1200")
+	aPlaceholderStatus  = flag.Int("placeholder-status", 0, "HTTP status returned when use -placeholder flag")
 	aDisableEndpoints   = flag.String("disable-endpoints", "", "Comma separated endpoints to disable. E.g: form,crop,rotate,health")
 	aHTTPCacheTTL       = flag.Int("http-cache-ttl", -1, "The TTL in seconds")
 	aReadTimeout        = flag.Int("http-read-timeout", 60, "HTTP read timeout in seconds")
@@ -57,6 +59,8 @@ var (
 	aBurst              = flag.Int("burst", 100, "Throttle burst max cache size")
 	aMRelease           = flag.Int("mrelease", 30, "OS memory release interval in seconds")
 	aCpus               = flag.Int("cpus", runtime.GOMAXPROCS(-1), "Number of cpu cores to use")
+	aLogLevel           = flag.String("log-level", "info", "Define log level for http-server. E.g: info,warning,error")
+	aReturnSize         = flag.Bool("return-size", false, "Return the image size in the HTTP headers")
 )
 
 const usage = `imaginary %s
@@ -79,36 +83,42 @@ Usage:
   imaginary -v | -version
 
 Options:
-  -a <addr>                 Bind address [default: *]
-  -p <port>                 Bind port [default: 8088]
-  -h, -help                 Show help
-  -v, -version              Show version
-  -path-prefix <value>      Url path prefix to listen to [default: "/"]
-  -cors                     Enable CORS support [default: false]
-  -gzip                     Enable gzip compression (deprecated) [default: false]
-  -disable-endpoints        Comma separated endpoints to disable. E.g: form,crop,rotate,health [default: ""]
-  -key <key>                Define API key for authorization
-  -mount <path>             Mount server local directory
-  -http-cache-ttl <num>     The TTL in seconds. Adds caching headers to locally served files.
-  -http-read-timeout <num>  HTTP read timeout in seconds [default: 30]
-  -http-write-timeout <num> HTTP write timeout in seconds [default: 30]
-  -enable-url-source        Enable remote HTTP URL image source processing
-  -enable-placeholder       Enable image response placeholder to be used in case of error [default: false]
-  -enable-auth-forwarding   Forwards X-Forward-Authorization or Authorization header to the image source server. -enable-url-source flag must be defined. Tip: secure your server from public access to prevent attack vectors
-  -forward-headers          Forwards custom headers to the image source server. -enable-url-source flag must be defined.
-  -enable-url-signature     Enable URL signature (URL-safe Base64-encoded HMAC digest) [default: false]
-  -url-signature-key        The URL signature key (32 characters minimum)
-  -allowed-origins <urls>   Restrict remote image source processing to certain origins (separated by commas)
-  -max-allowed-size <bytes> Restrict maximum size of http image source (in bytes)
-  -certfile <path>          TLS certificate file path
-  -keyfile <path>           TLS private key file path
-  -authorization <value>    Defines a constant Authorization header value passed to all the image source servers. -enable-url-source flag must be defined. This overwrites authorization headers forwarding behavior via X-Forward-Authorization
-  -placeholder <path>       Image path to image custom placeholder to be used in case of error. Recommended minimum image size is: 1200x1200
-  -concurrency <num>        Throttle concurrency limit per second [default: disabled]
-  -burst <num>              Throttle burst max cache size [default: 100]
-  -mrelease <num>           OS memory release interval in seconds [default: 30]
-  -cpus <num>               Number of used cpu cores.
-                            (default for current machine is %d cores)
+
+  -a <addr>                  Bind address [default: *]
+  -p <port>                  Bind port [default: 8088]
+  -h, -help                  Show help
+  -v, -version               Show version
+  -path-prefix <value>       Url path prefix to listen to [default: "/"]
+  -cors                      Enable CORS support [default: false]
+  -gzip                      Enable gzip compression (deprecated) [default: false]
+  -disable-endpoints         Comma separated endpoints to disable. E.g: form,crop,rotate,health [default: ""]
+  -key <key>                 Define API key for authorization
+  -mount <path>              Mount server local directory
+  -http-cache-ttl <num>      The TTL in seconds. Adds caching headers to locally served files.
+  -http-read-timeout <num>   HTTP read timeout in seconds [default: 30]
+  -http-write-timeout <num>  HTTP write timeout in seconds [default: 30]
+  -enable-url-source         Enable remote HTTP URL image source processing
+  -enable-placeholder        Enable image response placeholder to be used in case of error [default: false]
+  -enable-auth-forwarding    Forwards X-Forward-Authorization or Authorization header to the image source server. -enable-url-source flag must be defined. Tip: secure your server from public access to prevent attack vectors
+  -forward-headers           Forwards custom headers to the image source server. -enable-url-source flag must be defined.
+  -enable-url-signature      Enable URL signature (URL-safe Base64-encoded HMAC digest) [default: false]
+  -url-signature-key         The URL signature key (32 characters minimum)
+  -allowed-origins <urls>    Restrict remote image source processing to certain origins (separated by commas)
+  -max-allowed-size <bytes>  Restrict maximum size of http image source (in bytes)
+  -max-allowed-resolution <megapixels> Restrict maximum resolution of the image [default: 18.0]
+  -certfile <path>           TLS certificate file path
+  -keyfile <path>            TLS private key file path
+  -authorization <value>     Defines a constant Authorization header value passed to all the image source servers. -enable-url-source flag must be defined. This overwrites authorization headers forwarding behavior via X-Forward-Authorization
+  -placeholder <path>        Image path to image custom placeholder to be used in case of error. Recommended minimum image size is: 1200x1200
+  -placeholder-status <code> HTTP status returned when use -placeholder flag
+  -concurrency <num>         Throttle concurrency limit per second [default: disabled]
+  -burst <num>               Throttle burst max cache size [default: 100]
+  -mrelease <num>            OS memory release interval in seconds [default: 30]
+  -cpus <num>                Number of used cpu cores.
+                             (default for current machine is %d cores)
+  -log-level                 Set log level for http-server. E.g: info,warning,error [default: info].
+                             Or can use the environment variable GOLANG_LOG=info.
+  -return-size               Return the image size with X-Width and X-Height HTTP header. [default: disabled].
 `
 
 type URLSignature struct {
@@ -117,7 +127,7 @@ type URLSignature struct {
 
 func main() {
 	flag.Usage = func() {
-		fmt.Fprint(os.Stderr, fmt.Sprintf(usage, Version, runtime.NumCPU()))
+		_, _ = fmt.Fprintf(os.Stderr, usage, Version, runtime.NumCPU())
 	}
 	flag.Parse()
 
@@ -168,6 +178,7 @@ func main() {
 		CertFile:           *aCertFile,
 		KeyFile:            *aKeyFile,
 		Placeholder:        *aPlaceholder,
+		PlaceholderStatus:  *aPlaceholderStatus,
 		HTTPCacheTTL:       *aHTTPCacheTTL,
 		HTTPReadTimeout:    *aReadTimeout,
 		HTTPWriteTimeout:   *aWriteTimeout,
@@ -177,6 +188,9 @@ func main() {
 		MaxAllowedSize:     *aMaxAllowedSize,
 		Cacher:             cacheKeeper,
 		S3Client:           db.S3Client,
+		MaxAllowedPixels:   *aMaxAllowedPixels,
+		LogLevel:           getLogLevel(*aLogLevel),
+		ReturnSize:         *aReturnSize,
 	}
 
 	// Show warning if gzip flag is passed
@@ -250,10 +264,7 @@ func main() {
 	LoadSources(opts)
 
 	// Start the server
-	err := Server(opts)
-	if err != nil {
-		exitWithError("cannot start the server: %s", err)
-	}
+	Server(opts)
 }
 
 func getPort(port int) int {
@@ -272,6 +283,13 @@ func getURLSignature(key string) URLSignature {
 	}
 
 	return URLSignature{key}
+}
+
+func getLogLevel(logLevel string) string {
+	if logLevelEnv := os.Getenv("GOLANG_LOG"); logLevelEnv != "" {
+		logLevel = logLevelEnv
+	}
+	return logLevel
 }
 
 func showUsage() {
@@ -332,8 +350,13 @@ func parseOrigins(origins string) []*url.URL {
 			continue
 		}
 
-		if u.Path != "" && u.Path[len(u.Path)-1:] != "/" {
-			u.Path += "/"
+		if u.Path != "" {
+			var lastChar = u.Path[len(u.Path)-1:]
+			if lastChar == "*" {
+				u.Path = strings.TrimSuffix(u.Path, "*")
+			} else if lastChar != "/" {
+				u.Path += "/"
+			}
 		}
 
 		urls = append(urls, u)

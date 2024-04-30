@@ -59,6 +59,8 @@ var paramTypeCoercions = map[string]Coercion{
 	"interlace":   coerceInterlace,
 	"aspectratio": coerceAspectRatio,
 	"enlarge":     coerceEnlarge,
+	"palette":     coercePalette,
+	"speed":       coerceSpeed,
 }
 
 func coerceTypeInt(param interface{}) (int, error) {
@@ -374,9 +376,22 @@ func coerceEnlarge(io *ImageOptions, param interface{}) (err error) {
 	return err
 }
 
-func buildParamsFromOperation(op PipelineOperation) (ImageOptions, error) {
+func coercePalette(io *ImageOptions, param interface{}) (err error) {
+	io.Palette, err = coerceTypeBool(param)
+	io.IsDefinedField.Palette = true
+	return err
+}
 
+func coerceSpeed(io *ImageOptions, param interface{}) (err error) {
+	io.Speed, err = coerceTypeInt(param)
+	return err
+}
+
+func buildParamsFromOperation(op PipelineOperation) (ImageOptions, error) {
 	var options ImageOptions
+
+	// Apply defaults
+	options.Extend = bimg.ExtendCopy
 
 	for key, value := range op.Params {
 		fn, ok := paramTypeCoercions[key]
@@ -396,6 +411,9 @@ func buildParamsFromOperation(op PipelineOperation) (ImageOptions, error) {
 // buildParamsFromQuery builds the ImageOptions type from untyped parameters
 func buildParamsFromQuery(query url.Values) (ImageOptions, error) {
 	var options ImageOptions
+
+	// Apply defaults
+	options.Extend = bimg.ExtendCopy
 
 	// Extract only known parameters
 	for key := range query {
@@ -479,16 +497,19 @@ func parseExtendMode(val string) bimg.Extend {
 	if val == "white" {
 		return bimg.ExtendWhite
 	}
+	if val == "black" {
+		return bimg.ExtendBlack
+	}
 	if val == "copy" {
 		return bimg.ExtendCopy
-	}
-	if val == "mirror" {
-		return bimg.ExtendMirror
 	}
 	if val == "background" {
 		return bimg.ExtendBackground
 	}
-	return bimg.ExtendBlack
+	if val == "lastpixel" {
+		return bimg.ExtendLast
+	}
+	return bimg.ExtendMirror
 }
 
 func parseGravity(val string) bimg.Gravity {

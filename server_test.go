@@ -21,7 +21,8 @@ import (
 )
 
 func TestIndex(t *testing.T) {
-	ts := testServer(indexController)
+	opts := ServerOptions{PathPrefix: "/", MaxAllowedPixels: 18.0}
+	ts := testServer(indexController(opts))
 	defer ts.Close()
 
 	res, err := http.Get(ts.URL)
@@ -279,13 +280,13 @@ func TestFit(t *testing.T) {
 }
 
 func TestRemoteHTTPSource(t *testing.T) {
-	opts := ServerOptions{EnableURLSource: true, Cacher: mockCacher()}
+	opts := ServerOptions{EnableURLSource: true, MaxAllowedPixels: 18.0, Cacher: mockCacher()}
 	fn := ImageMiddleware(opts)(Crop)
 	LoadSources(opts)
 
 	tsImage := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
 		buf, _ := ioutil.ReadFile("testdata/large.jpg")
-		w.Write(buf)
+		_, _ = w.Write(buf)
 	}))
 	defer tsImage.Close()
 
@@ -320,7 +321,7 @@ func TestRemoteHTTPSource(t *testing.T) {
 }
 
 func TestInvalidRemoteHTTPSource(t *testing.T) {
-	opts := ServerOptions{EnableURLSource: true, Cacher: mockCacher()}
+	opts := ServerOptions{EnableURLSource: true, MaxAllowedPixels: 18.0, Cacher: mockCacher()}
 	fn := ImageMiddleware(opts)(Crop)
 	LoadSources(opts)
 
@@ -343,7 +344,7 @@ func TestInvalidRemoteHTTPSource(t *testing.T) {
 }
 
 func TestMountDirectory(t *testing.T) {
-	opts := ServerOptions{Mount: "testdata", Cacher: mockCacher()}
+	opts := ServerOptions{Mount: "testdata", MaxAllowedPixels: 18.0, Cacher: mockCacher()}
 	fn := ImageMiddleware(opts)(Crop)
 	LoadSources(opts)
 
@@ -378,7 +379,7 @@ func TestMountDirectory(t *testing.T) {
 }
 
 func TestMountInvalidDirectory(t *testing.T) {
-	fn := ImageMiddleware(ServerOptions{Mount: "_invalid_", Cacher: mockCacher()})(Crop)
+	fn := ImageMiddleware(ServerOptions{Mount: "_invalid_", MaxAllowedPixels: 18.0, Cacher: mockCacher()})(Crop)
 	ts := httptest.NewServer(fn)
 	url := ts.URL + "?top=100&left=100&areawidth=200&areaheight=120&file=large.jpg"
 	defer ts.Close()
@@ -412,7 +413,7 @@ func TestMountInvalidPath(t *testing.T) {
 func controller(op Operation) func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		buf, _ := ioutil.ReadAll(r.Body)
-		imageHandler(w, r, buf, op, ServerOptions{Cacher: mockCacher()})
+		imageHandler(w, r, buf, op, ServerOptions{MaxAllowedPixels: 18.0, Cacher: mockCacher()})
 	}
 }
 
@@ -431,7 +432,7 @@ func assertSize(buf []byte, width, height int) error {
 		return err
 	}
 	if size.Width != width || size.Height != height {
-		return fmt.Errorf("Invalid image size: %dx%d, expected: %dx%d", size.Width, size.Height, width, height)
+		return fmt.Errorf("invalid image size: %dx%d, expected: %dx%d", size.Width, size.Height, width, height)
 	}
 	return nil
 }
