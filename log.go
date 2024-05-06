@@ -2,13 +2,18 @@ package main
 
 import (
 	"fmt"
+	"github.com/kumparan/go-utils"
+	log "github.com/sirupsen/logrus"
 	"io"
 	"net/http"
+	"net/url"
 	"strings"
 	"time"
 )
 
-const formatPattern = `{"remote_ip": "%s", "time": "%s", "method": "%s", "uri": "%s", "protocol": "%s", "status": "%d", "imaginary_bytes_out": %d, "imaginary_duration_in_ms": %d, "latency_human": "%s"}%s`
+const formatPattern = `{"remote_ip": "%s", "time": "%s", "method": "%s", "uri": "%s", "protocol": "%s", "status": "%d", "imaginary_bytes_out": %d, "imaginary_duration_in_ms": %d, "latency_human": "%s", "masked_imaginary_uri": "%s"}%s`
+
+var maskedFields = []string{"s3", "text", "image", "font"}
 
 // LogRecord implements an Apache-compatible HTTP logging
 type LogRecord struct {
@@ -23,9 +28,39 @@ type LogRecord struct {
 
 // Log writes a log entry in the passed io.Writer stream
 func (r *LogRecord) Log(out io.Writer) {
-	timeFormat := r.time.Format(time.RFC3339Nano)
+	go func() {
+		timeFormat := r.time.Format(time.RFC3339Nano)
 
-	_, _ = fmt.Fprintf(out, formatPattern, r.ip, timeFormat, r.method, r.uri, r.protocol, r.status, r.responseBytes, r.elapsedTime.Milliseconds(), r.elapsedTime.String(), "\n")
+		splited := strings.Split(r.uri, "?")
+		if len(splited) <= 0 {
+			_, _ = fmt.Fprintf(out, formatPattern, r.ip, timeFormat, r.method, r.uri, r.protocol, r.status, r.responseBytes, r.elapsedTime.Milliseconds(), r.elapsedTime.String(), "", "\n")
+			return
+		}
+		if len(splited) <= 1 {
+			_, _ = fmt.Fprintf(out, formatPattern, r.ip, timeFormat, r.method, r.uri, r.protocol, r.status, r.responseBytes, r.elapsedTime.Milliseconds(), r.elapsedTime.String(), splited[0], "\n")
+			return
+		}
+
+		maskedURI := splited[0]
+		queryParam, err := url.ParseQuery(splited[1])
+		if err != nil {
+			log.WithField("queryParam", splited[1]).Error(err)
+			_, _ = fmt.Fprintf(out, formatPattern, r.ip, timeFormat, r.method, r.uri, r.protocol, r.status, r.responseBytes, r.elapsedTime.Milliseconds(), r.elapsedTime.String(), maskedURI, "\n")
+		}
+
+		newQueryParam := url.Values{}
+		for k, params := range queryParam {
+			if utils.Contains(maskedFields, k) {
+				newQueryParam.Add(k, "_")
+				continue
+			}
+			for _, v := range params {
+				newQueryParam.Add(k, v)
+			}
+		}
+		maskedURI += "?" + newQueryParam.Encode()
+		_, _ = fmt.Fprintf(out, formatPattern, r.ip, timeFormat, r.method, r.uri, r.protocol, r.status, r.responseBytes, r.elapsedTime.Milliseconds(), r.elapsedTime.String(), maskedURI, "\n")
+	}()
 }
 
 // Write acts like a proxy passing the given bytes buffer to the ResponseWritter
