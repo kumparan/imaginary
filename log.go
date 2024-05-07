@@ -46,6 +46,7 @@ func (r *LogRecord) Log(out io.Writer) {
 		if err != nil {
 			log.WithField("queryParam", splited[1]).Error(err)
 			_, _ = fmt.Fprintf(out, formatPattern, record.ip, timeFormat, record.method, record.uri, record.protocol, record.status, record.responseBytes, record.elapsedTime.Milliseconds(), record.elapsedTime.String(), maskedURI, "\n")
+			return
 		}
 
 		newQueryParam := url.Values{}
