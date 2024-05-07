@@ -13,7 +13,7 @@ import (
 
 const formatPattern = `{"remote_ip": "%s", "time": "%s", "method": "%s", "uri": "%s", "protocol": "%s", "status": "%d", "imaginary_bytes_out": %d, "imaginary_duration_in_ms": %d, "latency_human": "%s", "imaginary_request_uri_scheme": "%s"}%s`
 
-var maskedFields = []string{"s3", "text", "image", "font"}
+var ignoredFields = []string{"s3", "text", "image", "font"}
 
 // LogRecord implements an Apache-compatible HTTP logging
 type LogRecord struct {
@@ -28,16 +28,16 @@ type LogRecord struct {
 
 // Log writes a log entry in the passed io.Writer stream
 func (r *LogRecord) Log(out io.Writer) {
-	go func() {
-		timeFormat := r.time.Format(time.RFC3339Nano)
+	go func(record *LogRecord) {
+		timeFormat := record.time.Format(time.RFC3339Nano)
 
-		splited := strings.Split(r.uri, "?")
+		splited := strings.Split(record.uri, "?")
 		if len(splited) <= 0 {
-			_, _ = fmt.Fprintf(out, formatPattern, r.ip, timeFormat, r.method, r.uri, r.protocol, r.status, r.responseBytes, r.elapsedTime.Milliseconds(), r.elapsedTime.String(), "", "\n")
+			_, _ = fmt.Fprintf(out, formatPattern, record.ip, timeFormat, record.method, record.uri, record.protocol, record.status, record.responseBytes, record.elapsedTime.Milliseconds(), record.elapsedTime.String(), "", "\n")
 			return
 		}
 		if len(splited) <= 1 {
-			_, _ = fmt.Fprintf(out, formatPattern, r.ip, timeFormat, r.method, r.uri, r.protocol, r.status, r.responseBytes, r.elapsedTime.Milliseconds(), r.elapsedTime.String(), splited[0], "\n")
+			_, _ = fmt.Fprintf(out, formatPattern, record.ip, timeFormat, record.method, record.uri, record.protocol, record.status, record.responseBytes, record.elapsedTime.Milliseconds(), record.elapsedTime.String(), splited[0], "\n")
 			return
 		}
 
@@ -45,12 +45,12 @@ func (r *LogRecord) Log(out io.Writer) {
 		queryParam, err := url.ParseQuery(splited[1])
 		if err != nil {
 			log.WithField("queryParam", splited[1]).Error(err)
-			_, _ = fmt.Fprintf(out, formatPattern, r.ip, timeFormat, r.method, r.uri, r.protocol, r.status, r.responseBytes, r.elapsedTime.Milliseconds(), r.elapsedTime.String(), maskedURI, "\n")
+			_, _ = fmt.Fprintf(out, formatPattern, record.ip, timeFormat, record.method, record.uri, record.protocol, record.status, record.responseBytes, record.elapsedTime.Milliseconds(), record.elapsedTime.String(), maskedURI, "\n")
 		}
 
 		newQueryParam := url.Values{}
 		for k, params := range queryParam {
-			if utils.Contains(maskedFields, k) {
+			if utils.Contains(ignoredFields, k) {
 				newQueryParam.Add(k, "_")
 				continue
 			}
@@ -59,8 +59,8 @@ func (r *LogRecord) Log(out io.Writer) {
 			}
 		}
 		maskedURI += "?" + newQueryParam.Encode()
-		_, _ = fmt.Fprintf(out, formatPattern, r.ip, timeFormat, r.method, r.uri, r.protocol, r.status, r.responseBytes, r.elapsedTime.Milliseconds(), r.elapsedTime.String(), maskedURI, "\n")
-	}()
+		_, _ = fmt.Fprintf(out, formatPattern, record.ip, timeFormat, record.method, record.uri, record.protocol, record.status, record.responseBytes, record.elapsedTime.Milliseconds(), record.elapsedTime.String(), maskedURI, "\n")
+	}(r)
 }
 
 // Write acts like a proxy passing the given bytes buffer to the ResponseWritter
