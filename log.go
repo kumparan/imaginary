@@ -11,7 +11,7 @@ import (
 	"time"
 )
 
-const formatPattern = `{"remote_ip": "%s", "time": "%s", "method": "%s", "uri": "%s", "protocol": "%s", "status": "%d", "imaginary_bytes_out": %d, "imaginary_duration_in_ms": %d, "latency_human": "%s", "masked_imaginary_uri": "%s"}%s`
+const formatPattern = `{"remote_ip": "%s", "time": "%s", "method": "%s", "uri": "%s", "protocol": "%s", "status": "%d", "imaginary_bytes_out": %d, "imaginary_duration_in_ms": %d, "latency_human": "%s", "imaginary_request_uri_scheme": "%s"}%s`
 
 var maskedFields = []string{"s3", "text", "image", "font"}
 
