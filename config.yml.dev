@@ -11,3 +11,4 @@ aws:
     s3_bucket: "$dev_media_s3_bucket"
 cache_ttl: 10000
 placeholder_base64: ""
+max_image_pixel_allowed: "18.0"

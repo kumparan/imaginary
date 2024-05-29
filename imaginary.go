@@ -186,11 +186,15 @@ func main() {
 		ForwardHeaders:     parseForwardHeaders(*aForwardHeaders),
 		AllowedOrigins:     parseOrigins(*aAllowedOrigins),
 		MaxAllowedSize:     *aMaxAllowedSize,
+		MaxAllowedPixels:   *aMaxAllowedPixels,
 		Cacher:             cacheKeeper,
 		S3Client:           db.S3Client,
-		MaxAllowedPixels:   *aMaxAllowedPixels,
 		LogLevel:           getLogLevel(*aLogLevel),
 		ReturnSize:         *aReturnSize,
+	}
+
+	if config.MaxImagePixelAllowedInMegaPixel() > 0 {
+		opts.MaxAllowedPixels = config.MaxImagePixelAllowedInMegaPixel()
 	}
 
 	// Show warning if gzip flag is passed
