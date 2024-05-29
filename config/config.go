@@ -91,7 +91,7 @@ func PlaceholderBase64() string {
 	return viper.GetString("placeholder_base64")
 }
 
-// MaxImagePixelAllowed :nodoc:
-func MaxImagePixelAllowed() float64 {
+// MaxImagePixelAllowedInMegaPixel :nodoc:
+func MaxImagePixelAllowedInMegaPixel() float64 {
 	return viper.GetFloat64("max_image_pixel_allowed")
 }

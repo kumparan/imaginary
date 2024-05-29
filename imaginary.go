@@ -193,8 +193,8 @@ func main() {
 		ReturnSize:         *aReturnSize,
 	}
 
-	if config.MaxImagePixelAllowed() > 0 {
-		opts.MaxAllowedPixels = config.MaxImagePixelAllowed()
+	if config.MaxImagePixelAllowedInMegaPixel() > 0 {
+		opts.MaxAllowedPixels = config.MaxImagePixelAllowedInMegaPixel()
 	}
 
 	// Show warning if gzip flag is passed
