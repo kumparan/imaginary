@@ -186,9 +186,9 @@ func main() {
 		ForwardHeaders:     parseForwardHeaders(*aForwardHeaders),
 		AllowedOrigins:     parseOrigins(*aAllowedOrigins),
 		MaxAllowedSize:     *aMaxAllowedSize,
+		MaxAllowedPixels:   config.MaxImagePixelAllowed(),
 		Cacher:             cacheKeeper,
 		S3Client:           db.S3Client,
-		MaxAllowedPixels:   *aMaxAllowedPixels,
 		LogLevel:           getLogLevel(*aLogLevel),
 		ReturnSize:         *aReturnSize,
 	}
